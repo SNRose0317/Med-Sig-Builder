@@ -324,3 +324,24 @@ footer {
     margin-top: 1rem;
   }
 }
+
+/* DoseInput Component Styles */
+.dose-input-container {
+  margin-bottom: 0.5rem;
+}
+
+.constraint-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+}
+
+.constraint-info span {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.4rem;
+}
+
+.conversion-info .badge {
+  font-weight: normal;
+}

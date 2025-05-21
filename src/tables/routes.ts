@@ -96,7 +96,7 @@ export const routes: Record<string, Route> = {
     code: "TOP",
     description: "Application to skin surface",
     applicableForms: ["Cream", "Gel", "Solution", "Foam", "Patch"],
-    humanReadable: "to affected area",
+    humanReadable: "topically",
     fhirCode: "TOP",
     requiresSpecialInstructions: true,
     specialInstructionsTemplate: "Apply {dose} {route} {frequency}."

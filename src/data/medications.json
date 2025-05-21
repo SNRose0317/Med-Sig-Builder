@@ -11,6 +11,15 @@
     },
     "doseForm": "Cream",
     "extension": [],
+    "packageInfo": {
+      "quantity": 30,
+      "unit": "mL",
+      "packSize": 1,
+      "totalVolume": {
+        "value": 30,
+        "unit": "mL"
+      }
+    },
     "dispenserInfo": {
       "type": "Topiclick",
       "unit": "click",
@@ -72,6 +81,10 @@
       "value": 5,
       "unit": "mL"
     },
+    "packageInfo": {
+      "quantity": 5,
+      "unit": "mL"
+    },
     "extension": [
       {
         "us-controlled": true,
@@ -130,6 +143,10 @@
     },
     "doseForm": "Capsule",
     "extension": [],
+    "packageInfo": {
+      "quantity": 30,
+      "unit": "capsules"
+    },
     "ingredient": [
       {
         "name": "Amoxicillin",
@@ -182,6 +199,10 @@
     },
     "doseForm": "Tablet",
     "extension": [],
+    "packageInfo": {
+      "quantity": 20,
+      "unit": "tablets"
+    },
     "ingredient": [
       {
         "name": "Prednisone",
@@ -229,6 +250,11 @@
     },
     "doseForm": "Nasal Spray",
     "extension": [],
+    "packageInfo": {
+      "quantity": 120,
+      "unit": "sprays",
+      "packSize": 1
+    },
     "ingredient": [
       {
         "name": "Fluticasone Propionate",

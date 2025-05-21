@@ -7,6 +7,7 @@ create table if not exists public.medications (
   code jsonb,
   dose_form text not null,
   total_volume jsonb,
+  package_info jsonb,
   extension jsonb,
   dispenser_info jsonb,
   ingredient jsonb not null,

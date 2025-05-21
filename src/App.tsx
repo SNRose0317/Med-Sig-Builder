@@ -5,7 +5,8 @@ import RouteSelector from './components/RouteSelector';
 import FrequencySelector from './components/FrequencySelector';
 import SpecialInstructions from './components/SpecialInstructions';
 import SignatureOutput from './components/SignatureOutput';
-import MedicationManagement from './components/MedicationManagement';
+import MedicationOverviewTable from './components/MedicationOverviewTable';
+import DaysSupplyCalculator from './components/DaysSupplyCalculator';
 import reducer, { initialState, validateState, AppState } from './reducer';
 import { generateSignature, DoseInput as DoseInputType } from './utils/buildDosage';
 import { Medication } from './types';
@@ -228,6 +229,16 @@ function App() {
                   </div>
                   <div className="output-panel-body">
                     <SignatureOutput signature={state.generatedSignature} />
+                    
+                    {/* Days Supply Calculator - only show when we have a complete signature */}
+                    {state.generatedSignature && (
+                      <DaysSupplyCalculator
+                        medication={state.selectedMedication!}
+                        doseValue={state.dosage.value}
+                        doseUnit={state.dosage.unit}
+                        frequency={state.selectedFrequency}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -236,7 +247,7 @@ function App() {
         )}
         
         {activeTab === 'management' && (
-          <MedicationManagement />
+          <MedicationOverviewTable />
         )}
       </div>
       

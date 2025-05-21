@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Medication } from '../types';
 import { DoseInput as DoseInputType, calculateDualDosage } from '../utils/buildDosage';
 import doseForms from '../tables/doseForms';
@@ -103,6 +103,40 @@ const DoseInput: React.FC<DoseInputProps> = ({
     }
   }, [medication, dosage.unit, onUpdateDosage]);
 
+  // Check if dose is within constraints (if defined)
+  const checkDoseConstraints = useCallback((value: number, unit: string) => {
+    if (!medication?.dosageConstraints) return null;
+    
+    const { minDose, maxDose } = medication.dosageConstraints;
+    
+    // Only apply constraints if the units match
+    if (minDose && minDose.unit === unit && value < minDose.value) {
+      return `Min dose: ${minDose.value} ${minDose.unit}`;
+    }
+    
+    if (maxDose && maxDose.unit === unit && value > maxDose.value) {
+      return `Max dose: ${maxDose.value} ${maxDose.unit}`;
+    }
+    
+    return null;
+  }, [medication]);
+  
+  // Apply dose constraints when unit changes
+  useEffect(() => {
+    if (!medication || !medication.dosageConstraints) return;
+    
+    const { minDose, maxDose, step } = medication.dosageConstraints;
+    
+    // Only apply constraints if the units match
+    if (minDose && minDose.unit === dosage.unit && dosage.value < minDose.value) {
+      // If below min dose, automatically adjust to min dose
+      onUpdateDosage({ value: minDose.value, unit: dosage.unit });
+    } else if (maxDose && maxDose.unit === dosage.unit && dosage.value > maxDose.value) {
+      // If above max dose, automatically adjust to max dose
+      onUpdateDosage({ value: maxDose.value, unit: dosage.unit });
+    }
+  }, [medication, dosage.unit, onUpdateDosage]);
+  
   // Calculate dual dosage and dispenser dosage for display when either medication or dosage changes
   useEffect(() => {
     if (!medication) {
@@ -128,19 +162,24 @@ const DoseInput: React.FC<DoseInputProps> = ({
           
           // Calculate conversions based on input unit
           if (dosage.unit === doseFormInfo.dispenserConversion.dispenserUnit) {
-            // Input is in clicks, convert to mL
-            const mlValue = dosage.value / conversionRatio;
-            const mgValue = mlValue * (strengthRatio.numerator.value / strengthRatio.denominator.value);
-            
-            setDispenserDosage({
-              value: Number(mlValue.toFixed(2)),
-              unit: 'mL'
-            });
-            
-            setDualDosage({
-              weightBased: { value: Number(mgValue.toFixed(0)), unit: strengthRatio.numerator.unit },
-              volumeBased: { value: Number(mlValue.toFixed(2)), unit: 'mL' }
-            });
+      // Input is in clicks, convert to mL
+      const mlValue = dosage.value / conversionRatio;
+      
+      // Calculate mg value based on strength ratio (e.g., 100mg/mL)
+      // For 2 clicks of a 100mg/mL cream:
+      // - 2 clicks / 4 clicks per mL = 0.5 mL
+      // - 0.5 mL * 100 mg/mL = 50 mg
+      const mgValue = mlValue * strengthRatio.numerator.value;
+      
+      setDispenserDosage({
+        value: Number(mlValue.toFixed(2)),
+        unit: 'mL'
+      });
+      
+      setDualDosage({
+        weightBased: { value: Number(mgValue.toFixed(0)), unit: strengthRatio.numerator.unit },
+        volumeBased: { value: Number(mlValue.toFixed(2)), unit: 'mL' }
+      });
           } 
           else if (dosage.unit === 'mL') {
             // Input is in mL, convert to clicks
@@ -202,7 +241,16 @@ const DoseInput: React.FC<DoseInputProps> = ({
 
   const handleDosageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value);
-    onUpdateDosage({ ...dosage, value: isNaN(value) ? 0 : value });
+    const numValue = isNaN(value) ? 0 : value;
+    
+    // Apply step constraint if defined
+    if (medication?.dosageConstraints?.step) {
+      const step = medication.dosageConstraints.step;
+      const rounded = Math.round(numValue / step) * step;
+      onUpdateDosage({ ...dosage, value: rounded });
+    } else {
+      onUpdateDosage({ ...dosage, value: numValue });
+    }
   };
 
   const handleUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -211,15 +259,19 @@ const DoseInput: React.FC<DoseInputProps> = ({
 
   return (
     <div className="dose-input">
-      <div className="input-group">
+      <div className="dose-input-container">
+        <div className="input-group">
         <input
           type="number"
           id="dosage-value"
           className={`form-control ${error ? 'is-invalid' : ''}`}
           value={dosage.value || ''}
           onChange={handleDosageChange}
-          step="0.01"
-          min="0"
+          step={medication?.dosageConstraints?.step || "0.01"}
+          min={medication?.dosageConstraints?.minDose?.unit === dosage.unit ? 
+            medication.dosageConstraints.minDose.value : "0"}
+          max={medication?.dosageConstraints?.maxDose?.unit === dosage.unit ? 
+            medication.dosageConstraints.maxDose.value : undefined}
           placeholder="Amount"
           disabled={!medication}
           aria-label="Dose amount"
@@ -239,10 +291,35 @@ const DoseInput: React.FC<DoseInputProps> = ({
           ))}
         </select>
         {error && <div className="invalid-feedback">{error}</div>}
+        
+        </div>
+        
+        {/* Show constraint info if available */}
+        {medication?.dosageConstraints && dosage.unit && (
+          <div className="constraint-info small mt-1">
+            {medication.dosageConstraints.minDose?.unit === dosage.unit && (
+              <span className="me-2 badge bg-light text-dark border">
+                <i className="bi bi-arrow-down-short"></i> Min: {medication.dosageConstraints.minDose.value} {dosage.unit}
+              </span>
+            )}
+            {medication.dosageConstraints.maxDose?.unit === dosage.unit && (
+              <span className="badge bg-light text-dark border">
+                <i className="bi bi-arrow-up-short"></i> Max: {medication.dosageConstraints.maxDose.value} {dosage.unit}
+              </span>
+            )}
+            {medication.dosageConstraints.step && (
+              <span className="ms-2 badge bg-light text-dark border">
+                <i className="bi bi-arrows-collapse"></i> Step: {medication.dosageConstraints.step}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
+      {/* Component styles are now included in the main CSS file */}
+
       {/* Display conversion information */}
-      <div className="mt-2">
+      <div className="mt-1 conversion-info">
         {/* Display dispenser conversion (clicks) for creams */}
         {dispenserDosage && (
           <span className="badge bg-light text-secondary d-inline-flex align-items-center me-1" style={{fontSize: "0.7rem"}}>

@@ -3,6 +3,8 @@ import { Medication } from '../types';
 import doseForms, { doseFormOptions } from '../tables/doseForms';
 import dispenserTypes, { dispenserOptions } from '../tables/dispensers';
 import routes, { routeOptions } from '../tables/routes';
+import frequencies, { frequencyOptions } from '../tables/frequencyTable';
+import DaysSupplyCalculator from './DaysSupplyCalculator';
 import { v4 as uuidv4 } from 'uuid';
 
 interface MedicationFormProps {
@@ -37,6 +39,11 @@ const MedicationForm: React.FC<MedicationFormProps> = ({ medication, isAddMode, 
   const [formData, setFormData] = useState<Medication>(medication || defaultMedication);
   const [availableDispenserTypes, setAvailableDispenserTypes] = useState<string[]>([]);
   const [availableRoutes, setAvailableRoutes] = useState<string[]>([]);
+  
+  // State for the days supply calculator
+  const [currentDoseValue, setCurrentDoseValue] = useState<number>(0);
+  const [currentDoseUnit, setCurrentDoseUnit] = useState<string>('');
+  const [currentFrequency, setCurrentFrequency] = useState<string>('');
 
   // Update form when medication prop changes
   useEffect(() => {
@@ -162,6 +169,38 @@ const MedicationForm: React.FC<MedicationFormProps> = ({ medication, isAddMode, 
             [field]: field === 'conversionRatio' ? parseFloat(value) : value
           }
         }));
+      } else if (parts[0] === 'packageInfo') {
+        const field = parts[1];
+        
+        // Handle numeric fields (quantity, packSize) and string field (unit) differently
+        if (field === 'quantity') {
+          const numValue = value === '' ? undefined : parseFloat(value);
+          setFormData(prev => ({
+            ...prev,
+            packageInfo: {
+              ...(prev.packageInfo || {}),
+              quantity: numValue as number, // Cast needed since we're ensuring it's not undefined when submitting
+              unit: prev.packageInfo?.unit || ''
+            }
+          }));
+        } else if (field === 'packSize') {
+          const numValue = value === '' ? undefined : parseFloat(value);
+          setFormData(prev => ({
+            ...prev,
+            packageInfo: {
+              ...(prev.packageInfo || { quantity: 0, unit: '' }),
+              packSize: numValue
+            }
+          }));
+        } else if (field === 'unit') {
+          setFormData(prev => ({
+            ...prev,
+            packageInfo: {
+              ...(prev.packageInfo || { quantity: 0 }),
+              unit: value
+            }
+          }));
+        }
       }
     } else {
       // Handle top-level properties
@@ -207,13 +246,47 @@ const MedicationForm: React.FC<MedicationFormProps> = ({ medication, isAddMode, 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Update the display name to include the dose form
-    const updatedFormData = {
+    // Create a clean version of the form data for submission
+    let updatedFormData = {
       ...formData,
       code: {
         coding: [{ display: `${formData.name} ${formData.doseForm}` }]
       }
     };
+    
+    // Format packageInfo correctly for submission
+    if (formData.packageInfo) {
+      // Only include packageInfo if quantity and unit are provided
+      if (formData.packageInfo.quantity !== undefined && 
+          formData.packageInfo.quantity !== null && 
+          formData.packageInfo.quantity > 0 &&
+          formData.packageInfo.unit) {
+        
+        const packageData = {
+          quantity: formData.packageInfo.quantity,
+          unit: formData.packageInfo.unit,
+          // Only include packSize if it has a value
+          ...(formData.packageInfo.packSize ? { packSize: formData.packageInfo.packSize } : {})
+        };
+        
+        updatedFormData.packageInfo = packageData;
+        
+        // Ensure totalVolume is synchronized with packageInfo
+        updatedFormData.totalVolume = {
+          value: formData.packageInfo.quantity,
+          unit: formData.packageInfo.unit
+        };
+        
+        console.log('Saving medication with package info and total volume:', {
+          packageInfo: updatedFormData.packageInfo,
+          totalVolume: updatedFormData.totalVolume
+        });
+      } else {
+        // If incomplete packageInfo, omit it from the submission
+        const { packageInfo, totalVolume, ...restFormData } = updatedFormData;
+        updatedFormData = restFormData as Medication;
+      }
+    }
     
     onSave(updatedFormData);
   };
@@ -252,6 +325,87 @@ const MedicationForm: React.FC<MedicationFormProps> = ({ medication, isAddMode, 
               </option>
             ))}
           </select>
+        </div>
+        
+        <div className="form-section">
+          <h4>Package Information</h4>
+          
+          <div className="form-group">
+            <div className="package-info-row">
+              <div className="quantity-unit-group">
+                <label htmlFor="packageInfo.quantity">Total Quantity</label>
+                <div className="quantity-unit-inputs">
+                  <input
+                    type="number"
+                    id="packageInfo.quantity"
+                    name="packageInfo.quantity"
+                    value={formData.packageInfo?.quantity || ''}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                      setFormData(prev => {
+                        // Update both packageInfo and totalVolume since they should be the same
+                        const packageUpdate = {
+                          ...prev,
+                          packageInfo: {
+                            ...(prev.packageInfo || {}),
+                            quantity: value as number,
+                            unit: prev.packageInfo?.unit || (prev.ingredient[0]?.strengthRatio.denominator.unit || 'mL')
+                          },
+                          totalVolume: {
+                            value: value as number,
+                            unit: prev.packageInfo?.unit || (prev.ingredient[0]?.strengthRatio.denominator.unit || 'mL')
+                          }
+                        };
+                        return packageUpdate;
+                      });
+                    }}
+                    step="0.01"
+                    min="0"
+                    className="form-control quantity-input"
+                  />
+                  <input
+                    type="text"
+                    id="packageInfo.unit"
+                    name="packageInfo.unit"
+                    value={formData.packageInfo?.unit || (formData.ingredient[0]?.strengthRatio.denominator.unit || '')}
+                    onChange={(e) => {
+                      setFormData(prev => {
+                        // Update both packageInfo and totalVolume since they should be the same
+                        return {
+                          ...prev,
+                          packageInfo: {
+                            ...(prev.packageInfo || { quantity: 0 }),
+                            unit: e.target.value
+                          },
+                          totalVolume: {
+                            value: prev.packageInfo?.quantity || 0,
+                            unit: e.target.value
+                          }
+                        };
+                      });
+                    }}
+                    className="form-control unit-input"
+                    placeholder="unit"
+                  />
+                </div>
+              </div>
+              
+              <div className="pack-size-group">
+                <label htmlFor="packageInfo.packSize">Pack Size</label>
+                <input
+                  type="number"
+                  id="packageInfo.packSize"
+                  name="packageInfo.packSize"
+                  value={formData.packageInfo?.packSize || ''}
+                  onChange={handleInputChange}
+                  min="0"
+                  className="form-control"
+                  placeholder="optional"
+                />
+              </div>
+            </div>
+            <small className="form-text">This information is used for both package details and total volume calculations</small>
+          </div>
         </div>
         
         {formData.doseForm && availableDispenserTypes.length > 0 && (
@@ -448,6 +602,215 @@ const MedicationForm: React.FC<MedicationFormProps> = ({ medication, isAddMode, 
         </div>
       </div>
       
+      <div className="form-section">
+        <h4>Dosage Constraints</h4>
+        <p className="form-text mb-3">
+          Set minimum and maximum dose limits for this medication. These constraints will be applied when creating prescriptions.
+        </p>
+        
+        <div className="dosage-constraints-row">
+          <div className="form-group min-dose-group">
+            <label htmlFor="dosageConstraints.minDose.value">Min Dose</label>
+            <div className="quantity-unit-inputs">
+              <input
+                type="number"
+                id="dosageConstraints.minDose.value"
+                name="dosageConstraints.minDose.value"
+                value={formData.dosageConstraints?.minDose?.value || ''}
+                onChange={(e) => {
+                  const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                  setFormData(prev => ({
+                    ...prev,
+                    dosageConstraints: {
+                      ...(prev.dosageConstraints || {}),
+                      minDose: {
+                        value: value as number,
+                        unit: prev.dosageConstraints?.minDose?.unit || 
+                              prev.ingredient[0]?.strengthRatio.numerator.unit || 'mg'
+                      }
+                    }
+                  }));
+                }}
+                step="0.01"
+                min="0"
+                className="form-control quantity-input"
+              />
+              <input
+                type="text"
+                id="dosageConstraints.minDose.unit"
+                name="dosageConstraints.minDose.unit"
+                value={
+                  formData.dosageConstraints?.minDose?.unit || 
+                  formData.ingredient[0]?.strengthRatio.numerator.unit || 'mg'
+                }
+                onChange={(e) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    dosageConstraints: {
+                      ...(prev.dosageConstraints || {}),
+                      minDose: {
+                        ...(prev.dosageConstraints?.minDose || { value: 0 }),
+                        unit: e.target.value
+                      }
+                    }
+                  }));
+                }}
+                className="form-control unit-input"
+                placeholder="unit"
+              />
+            </div>
+          </div>
+          
+          <div className="form-group max-dose-group">
+            <label htmlFor="dosageConstraints.maxDose.value">Max Dose</label>
+            <div className="quantity-unit-inputs">
+              <input
+                type="number"
+                id="dosageConstraints.maxDose.value"
+                name="dosageConstraints.maxDose.value"
+                value={formData.dosageConstraints?.maxDose?.value || ''}
+                onChange={(e) => {
+                  const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                  setFormData(prev => ({
+                    ...prev,
+                    dosageConstraints: {
+                      ...(prev.dosageConstraints || {}),
+                      maxDose: {
+                        value: value as number,
+                        unit: prev.dosageConstraints?.maxDose?.unit || 
+                              prev.ingredient[0]?.strengthRatio.numerator.unit || 'mg'
+                      }
+                    }
+                  }));
+                }}
+                step="0.01"
+                min="0"
+                className="form-control quantity-input"
+              />
+              <input
+                type="text"
+                id="dosageConstraints.maxDose.unit"
+                name="dosageConstraints.maxDose.unit"
+                value={
+                  formData.dosageConstraints?.maxDose?.unit || 
+                  formData.ingredient[0]?.strengthRatio.numerator.unit || 'mg'
+                }
+                onChange={(e) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    dosageConstraints: {
+                      ...(prev.dosageConstraints || {}),
+                      maxDose: {
+                        ...(prev.dosageConstraints?.maxDose || { value: 0 }),
+                        unit: e.target.value
+                      }
+                    }
+                  }));
+                }}
+                className="form-control unit-input"
+                placeholder="unit"
+              />
+            </div>
+          </div>
+          
+          <div className="form-group step-group">
+            <label htmlFor="dosageConstraints.step">Step Size</label>
+            <input
+              type="number"
+              id="dosageConstraints.step"
+              name="dosageConstraints.step"
+              value={formData.dosageConstraints?.step || ''}
+              onChange={(e) => {
+                const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                setFormData(prev => ({
+                  ...prev,
+                  dosageConstraints: {
+                    ...(prev.dosageConstraints || {}),
+                    step: value as number
+                  }
+                }));
+              }}
+              step="0.01"
+              min="0"
+              className="form-control"
+              placeholder="Increment"
+            />
+            <small className="form-text">Amount to increment/decrement by</small>
+          </div>
+        </div>
+      </div>
+      
+      {formData.packageInfo && formData.packageInfo.quantity > 0 && formData.packageInfo.unit && (
+        <div className="form-section">
+          <h4>Days Supply Calculator</h4>
+          <p className="calculator-intro">
+            Calculate how long this medication will last based on dosing frequency.
+          </p>
+          
+          <div className="days-supply-inputs">
+            <div className="form-group">
+              <label htmlFor="daysSupplyDoseValue">Dose Amount</label>
+              <input
+                type="number"
+                id="daysSupplyDoseValue"
+                value={currentDoseValue || ''}
+                onChange={(e) => setCurrentDoseValue(e.target.value ? parseFloat(e.target.value) : 0)}
+                step="0.01"
+                min="0"
+                className="form-control"
+              />
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="daysSupplyDoseUnit">Dose Unit</label>
+              <select
+                id="daysSupplyDoseUnit"
+                value={currentDoseUnit}
+                onChange={(e) => setCurrentDoseUnit(e.target.value)}
+                className="form-control"
+              >
+                <option value="">-- Select Unit --</option>
+                {formData.dispenserInfo && (
+                  <option value={formData.dispenserInfo.unit}>{formData.dispenserInfo.unit}</option>
+                )}
+                <option value={formData.ingredient[0]?.strengthRatio.numerator.unit || 'mg'}>
+                  {formData.ingredient[0]?.strengthRatio.numerator.unit || 'mg'}
+                </option>
+                <option value={formData.ingredient[0]?.strengthRatio.denominator.unit || ''}>
+                  {formData.ingredient[0]?.strengthRatio.denominator.unit || ''}
+                </option>
+              </select>
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="daysSupplyFrequency">Frequency</label>
+              <select
+                id="daysSupplyFrequency"
+                value={currentFrequency}
+                onChange={(e) => setCurrentFrequency(e.target.value)}
+                className="form-control"
+              >
+                <option value="">-- Select Frequency --</option>
+                {frequencyOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          
+          {currentDoseValue > 0 && currentDoseUnit && currentFrequency && (
+            <DaysSupplyCalculator
+              medication={formData}
+              doseValue={currentDoseValue}
+              doseUnit={currentDoseUnit}
+              frequency={currentFrequency}
+            />
+          )}
+        </div>
+      )}
+      
       <div className="form-actions">
         <button type="submit" className="btn btn-success">
           {isAddMode ? 'Add Medication' : 'Update Medication'}
@@ -485,6 +848,29 @@ const MedicationForm: React.FC<MedicationFormProps> = ({ medication, isAddMode, 
             font-size: 0.875rem;
             color: #6c757d;
           }
+          .package-info-row {
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+          }
+          .quantity-unit-group {
+            flex: 3;
+          }
+          .pack-size-group {
+            flex: 1;
+            min-width: 120px;
+          }
+          .quantity-unit-inputs {
+            display: flex;
+            gap: 0.5rem;
+          }
+          .quantity-input {
+            flex: 2;
+          }
+          .unit-input {
+            flex: 1;
+            min-width: 80px;
+          }
           .strength-ratio {
             display: grid;
             grid-template-columns: 1fr 1fr 50px 1fr 1fr;
@@ -515,6 +901,45 @@ const MedicationForm: React.FC<MedicationFormProps> = ({ medication, isAddMode, 
             padding: 0.5rem;
             background-color: #f8f9fa;
             border-radius: 4px;
+          }
+          
+          /* Days Supply Calculator Styles */
+          .calculator-intro {
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: #6c757d;
+          }
+          
+          .days-supply-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+          }
+          
+          /* Dosage Constraints Styles */
+          .dosage-constraints-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+          }
+
+          .min-dose-group, .max-dose-group {
+            display: flex;
+            flex-direction: column;
+          }
+
+          .step-group {
+            display: flex;
+            flex-direction: column;
+          }
+
+          @media (max-width: 768px) {
+            .days-supply-inputs, .dosage-constraints-row {
+              grid-template-columns: 1fr;
+              gap: 0.5rem;
+            }
           }
         `}
       </style>

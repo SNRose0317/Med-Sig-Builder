@@ -31,6 +31,15 @@ export const objectToDatabaseFormat = (obj: Record<string, any>): Record<string,
     const value = obj[key];
     const snakeKey = camelToSnake(key);
     
+    // Log conversion for debugging
+    console.log(`Converting key: ${key} to ${snakeKey}`);
+    
+    // Add extra logging for package_info and total_volume fields
+    if (key === 'packageInfo' || key === 'totalVolume') {
+      console.log(`Special field conversion - ${key}:`, JSON.stringify(value, null, 2));
+      console.log(`Converting to DB field: ${snakeKey}`);
+    }
+    
     // Handle nested objects and arrays
     if (value !== null && typeof value === 'object') {
       if (Array.isArray(value)) {
@@ -65,6 +74,15 @@ export const objectToApplicationFormat = (obj: Record<string, any>): Record<stri
   Object.keys(obj).forEach(key => {
     const value = obj[key];
     const camelKey = snakeToCamel(key);
+    
+    // Log conversion for debugging
+    console.log(`Converting DB key: ${key} to app key: ${camelKey}`);
+    
+    // Add extra logging for package_info and total_volume fields
+    if (key === 'package_info' || key === 'total_volume') {
+      console.log(`Special DB field conversion - ${key}:`, JSON.stringify(value, null, 2));
+      console.log(`Converting to app field: ${camelKey}`);
+    }
     
     // Handle nested objects and arrays
     if (value !== null && typeof value === 'object') {

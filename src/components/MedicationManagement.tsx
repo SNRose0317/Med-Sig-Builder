@@ -1,12 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import MedicationForm from './MedicationForm';
+import MedicationForm from './MedicationForm.tsx';
 import { Medication } from '../types';
 import defaultMedications from '../data/medications.json';
 import { getMedications, saveMedication, deleteMedication, initializeMedicationsDatabase } from '../services/medicationService';
 
-const MedicationManagement: React.FC = () => {
-  const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null);
-  const [isAddMode, setIsAddMode] = useState<boolean>(true);
+interface MedicationManagementProps {
+  initialMedication?: Medication | null;
+  initialAddMode?: boolean;
+  onMedicationSaved?: (medication: Medication) => void;
+  standalone?: boolean;
+}
+
+const MedicationManagement: React.FC<MedicationManagementProps> = ({
+  initialMedication = null,
+  initialAddMode = true,
+  onMedicationSaved,
+  standalone = false
+}) => {
+  const [selectedMedication, setSelectedMedication] = useState<Medication | null>(initialMedication);
+  const [isAddMode, setIsAddMode] = useState<boolean>(initialAddMode);
   const [medicationsList, setMedicationsList] = useState<Medication[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +89,11 @@ const MedicationManagement: React.FC = () => {
         );
       }
       setSelectedMedication(null);
+      
+      // If we have a callback for when medication is saved, call it
+      if (onMedicationSaved) {
+        onMedicationSaved(savedMedication);
+      }
     } catch (err) {
       console.error('Error saving medication:', err);
       const errorMessage = err instanceof Error 
@@ -112,12 +129,14 @@ const MedicationManagement: React.FC = () => {
 
   return (
     <div className="medication-management">
-      <div className="medication-management-header">
-        <h2>Medication Management</h2>
-        <button onClick={handleAddNewClick} className="btn btn-primary">
-          Add New Medication
-        </button>
-      </div>
+      {!standalone && (
+        <div className="medication-management-header">
+          <h2>Medication Management</h2>
+          <button onClick={handleAddNewClick} className="btn btn-primary">
+            Add New Medication
+          </button>
+        </div>
+      )}
 
       {error && (
         <div className="alert alert-danger mb-3">
@@ -131,8 +150,9 @@ const MedicationManagement: React.FC = () => {
       )}
 
       <div className="medication-management-content">
-        <div className="medication-list">
-          <h3>Existing Medications</h3>
+        {!standalone && (
+          <div className="medication-list">
+            <h3>Existing Medications</h3>
           {isLoading ? (
             <div className="loading-container">
               <div className="spinner"></div>
@@ -168,9 +188,10 @@ const MedicationManagement: React.FC = () => {
               No medications found. Add your first medication using the form.
             </div>
           )}
-        </div>
+          </div>
+        )}
 
-        <div className="medication-form-container">
+        <div className={`medication-form-container ${standalone ? 'standalone' : ''}`}>
           <h3>{isAddMode ? 'Add New Medication' : 'Edit Medication'}</h3>
           {isInitializing ? (
             <div className="loading-container">
@@ -188,6 +209,10 @@ const MedicationManagement: React.FC = () => {
       </div>
 
       <style>{`
+        .medication-form-container.standalone {
+          flex: 1;
+          max-width: 100%;
+        }
         .medication-management {
           padding: 1rem;
         }

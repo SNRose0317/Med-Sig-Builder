@@ -43,11 +43,53 @@ export function calculateDualDosage(medication: Medication, userDosage: DoseInpu
     if (userDosage.unit === numeratorUnit) {
       primaryDose = userDosage.value;
       secondaryDose = Number((userDosage.value / strengthValue).toFixed(2));
+      
+      // Apply dosage constraints if defined
+      if (medication.dosageConstraints?.minDose && 
+          medication.dosageConstraints.minDose.unit === numeratorUnit &&
+          primaryDose < medication.dosageConstraints.minDose.value) {
+        
+        // Adjust to minimum dose
+        primaryDose = medication.dosageConstraints.minDose.value;
+        secondaryDose = Number((primaryDose / strengthValue).toFixed(2));
+        console.log(`Adjusted dose to minimum: ${primaryDose} ${numeratorUnit}`);
+      }
+      
+      if (medication.dosageConstraints?.maxDose && 
+          medication.dosageConstraints.maxDose.unit === numeratorUnit &&
+          primaryDose > medication.dosageConstraints.maxDose.value) {
+        
+        // Adjust to maximum dose
+        primaryDose = medication.dosageConstraints.maxDose.value;
+        secondaryDose = Number((primaryDose / strengthValue).toFixed(2));
+        console.log(`Adjusted dose to maximum: ${primaryDose} ${numeratorUnit}`);
+      }
     } 
     // Case 2: User entered volume-based dose (mL)
     else if (userDosage.unit === denominatorUnit) {
       secondaryDose = userDosage.value;
       primaryDose = Number((userDosage.value * strengthValue).toFixed(0));
+      
+      // Apply dosage constraints if defined
+      if (medication.dosageConstraints?.minDose && 
+          medication.dosageConstraints.minDose.unit === numeratorUnit &&
+          primaryDose < medication.dosageConstraints.minDose.value) {
+        
+        // Adjust to minimum dose
+        primaryDose = medication.dosageConstraints.minDose.value;
+        secondaryDose = Number((primaryDose / strengthValue).toFixed(2));
+        console.log(`Adjusted dose to minimum: ${primaryDose} ${numeratorUnit}`);
+      }
+      
+      if (medication.dosageConstraints?.maxDose && 
+          medication.dosageConstraints.maxDose.unit === numeratorUnit &&
+          primaryDose > medication.dosageConstraints.maxDose.value) {
+        
+        // Adjust to maximum dose
+        primaryDose = medication.dosageConstraints.maxDose.value;
+        secondaryDose = Number((primaryDose / strengthValue).toFixed(2));
+        console.log(`Adjusted dose to maximum: ${primaryDose} ${numeratorUnit}`);
+      }
     }
     // Case 3: User entered another unit (not applicable for Vial/Solution)
     else {
@@ -69,11 +111,53 @@ export function calculateDualDosage(medication: Medication, userDosage: DoseInpu
         (userDosage.unit === 'application' && denominatorUnit === 'application')) {
       primaryDose = userDosage.value;
       secondaryDose = Number((userDosage.value * strengthValue).toFixed(2));
+      
+      // Apply dosage constraints for strength-based constraints
+      if (medication.dosageConstraints?.minDose && 
+          medication.dosageConstraints.minDose.unit === numeratorUnit &&
+          secondaryDose < medication.dosageConstraints.minDose.value) {
+        
+        // Adjust to minimum dose
+        secondaryDose = medication.dosageConstraints.minDose.value;
+        primaryDose = Number((secondaryDose / strengthValue).toFixed(2));
+        console.log(`Adjusted strength to minimum: ${secondaryDose} ${numeratorUnit}`);
+      }
+      
+      if (medication.dosageConstraints?.maxDose && 
+          medication.dosageConstraints.maxDose.unit === numeratorUnit &&
+          secondaryDose > medication.dosageConstraints.maxDose.value) {
+        
+        // Adjust to maximum dose
+        secondaryDose = medication.dosageConstraints.maxDose.value;
+        primaryDose = Number((secondaryDose / strengthValue).toFixed(2));
+        console.log(`Adjusted strength to maximum: ${secondaryDose} ${numeratorUnit}`);
+      }
     }
     // Case 2: User entered dose in the strength unit (mg, mcg, %, etc.)
     else if (userDosage.unit === numeratorUnit) {
       secondaryDose = userDosage.value;
       let calculatedDose = Number((userDosage.value / strengthValue).toFixed(2));
+      
+      // Apply dosage constraints directly if they're in strength units
+      if (medication.dosageConstraints?.minDose && 
+          medication.dosageConstraints.minDose.unit === numeratorUnit &&
+          secondaryDose < medication.dosageConstraints.minDose.value) {
+        
+        // Adjust to minimum dose
+        secondaryDose = medication.dosageConstraints.minDose.value;
+        calculatedDose = Number((secondaryDose / strengthValue).toFixed(2));
+        console.log(`Adjusted dose to minimum: ${secondaryDose} ${numeratorUnit}`);
+      }
+      
+      if (medication.dosageConstraints?.maxDose && 
+          medication.dosageConstraints.maxDose.unit === numeratorUnit &&
+          secondaryDose > medication.dosageConstraints.maxDose.value) {
+        
+        // Adjust to maximum dose
+        secondaryDose = medication.dosageConstraints.maxDose.value;
+        calculatedDose = Number((secondaryDose / strengthValue).toFixed(2));
+        console.log(`Adjusted dose to maximum: ${secondaryDose} ${numeratorUnit}`);
+      }
       
       // Special handling for tablets - only allow fractions down to 1/4
       if (denominatorUnit === 'tablet') {
@@ -93,6 +177,12 @@ export function calculateDualDosage(medication: Medication, userDosage: DoseInpu
         primaryDose = 1;
       } else {
         primaryDose = calculatedDose;
+      }
+      
+      // Apply step constraints if defined
+      if (medication.dosageConstraints?.step && medication.dosageConstraints.step > 0) {
+        primaryDose = Math.round(primaryDose / medication.dosageConstraints.step) * medication.dosageConstraints.step;
+        secondaryDose = Number((primaryDose * strengthValue).toFixed(2));
       }
     }
     // Case 3: User entered another unit
@@ -309,24 +399,30 @@ export function generateSignature(
           
           if (dosage.unit === dispenserUnit) {
             // If user selected clicks, show "2 clicks (0.5 mL, 50 mg)"
-            const mlValue = dualDosage.volumeBased.value;
-            const mgValue = dualDosage.weightBased.value;
+            // For Topiclick: 1 click = 0.25mL (4 clicks per mL)
+            // If cream strength is 100mg/mL, then 0.25mL = 25mg
+            const mlValue = dosage.value / conversionRatio;
+            const mgValue = mlValue * medication.ingredient[0].strengthRatio.numerator.value;
             
-            doseText = `${dosage.value} ${dosage.value === 1 ? dispenserUnit : dispenserPluralUnit} (${mlValue} mL, ${mgValue} ${dualDosage.weightBased.unit})`;
+            // Use the appropriate singular or plural form based on the dose value
+            const unitToUse = dosage.value === 1 ? dispenserUnit : dispenserPluralUnit;
+            doseText = `${dosage.value} ${unitToUse} (${mlValue.toFixed(2)} mL, ${mgValue.toFixed(0)} ${dualDosage.weightBased.unit})`;
           } 
           else if (dosage.unit === 'mL') {
             // If user selected mL, show "0.5 mL (2 clicks, 50 mg)"
             const clickValue = Math.round(dosage.value * conversionRatio);
             const mgValue = dualDosage.weightBased.value;
             
-            doseText = `${dosage.value} mL (${clickValue} ${clickValue === 1 ? dispenserUnit : dispenserPluralUnit}, ${mgValue} ${dualDosage.weightBased.unit})`;
+            const clickUnitText = clickValue === 1 ? dispenserUnit : dispenserPluralUnit;
+            doseText = `${dosage.value} mL (${clickValue} ${clickUnitText}, ${mgValue} ${dualDosage.weightBased.unit})`;
           }
           else if (dosage.unit === dualDosage.weightBased.unit) {
             // If user selected mg, show "50 mg (0.5 mL, 2 clicks)"
             const mlValue = dualDosage.volumeBased.value;
             const clickValue = Math.round(mlValue * conversionRatio);
             
-            doseText = `${dosage.value} ${dosage.unit} (${mlValue} mL, ${clickValue} ${clickValue === 1 ? dispenserUnit : dispenserPluralUnit})`;
+            const clickUnitText = clickValue === 1 ? dispenserUnit : dispenserPluralUnit;
+            doseText = `${dosage.value} ${dosage.unit} (${mlValue} mL, ${clickValue} ${clickUnitText})`;
           }
           else if (dosage.unit === 'application') {
             // If user selected application, show "1 application (0.05%)"
@@ -374,6 +470,41 @@ export function generateSignature(
   }
   
   const frequencyText = frequencyInfo.humanReadable;
+  
+      // Special handling for Topiclick/dispensers
+  // Make sure we have the correct pluralization in the main signature text
+  // And add mg equivalent for cream with Topiclick dispenser
+  if (medication.doseForm === 'Cream') {
+    const doseFormInfo = doseForms[medication.doseForm];
+    const hasDispenser = doseFormInfo?.hasSpecialDispenser && doseFormInfo?.dispenserConversion;
+    const hasStrengthRatio = medication.ingredient && medication.ingredient[0]?.strengthRatio;
+    
+    if (hasDispenser && doseFormInfo.dispenserConversion && hasStrengthRatio) {
+      const dispenserUnit = doseFormInfo.dispenserConversion.dispenserUnit;
+      const dispenserPluralUnit = doseFormInfo.dispenserConversion.dispenserPluralUnit;
+      const conversionRatio = doseFormInfo.dispenserConversion.conversionRatio;
+      const strengthRatio = medication.ingredient[0].strengthRatio;
+      
+      // If we're using clicks as the dose unit
+      if (dosage.unit === dispenserUnit) {
+        // Fix the dosage text to always use proper pluralization for dispenser units
+        if (dosage.value !== 1 && doseText.includes(` ${dispenserUnit} (`)) {
+          doseText = doseText.replace(` ${dispenserUnit} (`, ` ${dispenserPluralUnit} (`);
+        }
+        
+        // Add the mg equivalent directly to the dosage text
+        // This will make it appear in the main signature
+        const mlValue = dosage.value / conversionRatio;
+        const mgValue = mlValue * strengthRatio.numerator.value;
+        
+        // Extract the unit to use (singular or plural based on dose value)
+        const unitText = dosage.value === 1 ? dispenserUnit : dispenserPluralUnit;
+        
+        // Create a new dose text that explicitly includes the mg equivalent
+        doseText = `${dosage.value} ${unitText} (${mgValue.toFixed(0)} ${strengthRatio.numerator.unit})`;
+      }
+    }
+  }
   
   // Build the signature based on route type
   let sig;

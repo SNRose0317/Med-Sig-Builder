@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient'
 import { Medication } from '../types'
 import { objectToDatabaseFormat, objectToApplicationFormat } from './dbAdapter'
+import { flattenDosageConstraints, reconstructDosageConstraints } from './dbAdapter.ext'
 import { v4 as uuidv4 } from 'uuid'
 
 /**
@@ -20,8 +21,12 @@ export const getMedications = async (): Promise<Medication[]> => {
     throw new Error('No data returned from the database')
   }
   
-  // Convert from snake_case database columns to camelCase properties
-  return data.map(item => objectToApplicationFormat(item) as Medication);
+  // Convert from snake_case database columns to camelCase properties and reconstruct nested objects
+  return data.map(item => {
+    let resultObj = objectToApplicationFormat(item);
+    resultObj = reconstructDosageConstraints(resultObj);
+    return resultObj as Medication;
+  });
 }
 
 /**
@@ -44,7 +49,12 @@ export const saveMedication = async (medication: Medication): Promise<Medication
   }
   
   // Convert to snake_case for database storage
-  const medicationToSave = objectToDatabaseFormat(rawMedicationToSave);
+  let medicationToSave = objectToDatabaseFormat(rawMedicationToSave);
+  
+  // Flatten nested dosage constraints
+  medicationToSave = flattenDosageConstraints(medicationToSave);
+  
+  console.log('Saving medication with fields:', Object.keys(medicationToSave).join(', '));
   
   const { data, error } = await supabase
     .from('medications')
@@ -64,7 +74,12 @@ export const saveMedication = async (medication: Medication): Promise<Medication
   }
   
   // Convert back to camelCase for application use
-  return objectToApplicationFormat(data[0]) as Medication;
+  let resultObj = objectToApplicationFormat(data[0]);
+  
+  // Reconstruct nested dosage constraints
+  resultObj = reconstructDosageConstraints(resultObj);
+  
+  return resultObj as Medication;
 }
 
 /**

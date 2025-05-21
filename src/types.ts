@@ -15,6 +15,11 @@ export interface Medication {
     value: number;
     unit: string;
   };
+  packageInfo?: {
+    quantity: number;     // Total number of units (e.g., 30 capsules, 10mL)
+    unit: string;         // Unit of measurement (capsules, mL, etc.)
+    packSize?: number;    // For medications that come in packs (e.g., pack of 10 capsules)
+  };
   extension?: Array<{
     "us-controlled"?: boolean;
     schedule?: string;
