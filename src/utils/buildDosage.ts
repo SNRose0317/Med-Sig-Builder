@@ -73,11 +73,26 @@ export function calculateDualDosage(medication: Medication, userDosage: DoseInpu
     // Case 2: User entered dose in the strength unit (mg, mcg, %, etc.)
     else if (userDosage.unit === numeratorUnit) {
       secondaryDose = userDosage.value;
-      primaryDose = Number((userDosage.value / strengthValue).toFixed(0));
+      let calculatedDose = Number((userDosage.value / strengthValue).toFixed(2));
       
+      // Special handling for tablets - only allow fractions down to 1/4
+      if (denominatorUnit === 'tablet') {
+        if (calculatedDose < 0.25) {
+          // Don't go below 1/4 tablet
+          primaryDose = 0.25;
+        } else if (calculatedDose < 1) {
+          // Round to nearest 1/4 tablet (0.25, 0.5, 0.75)
+          primaryDose = Math.round(calculatedDose * 4) / 4;
+        } else {
+          // For whole tablets or more, round to nearest 1/4
+          primaryDose = Math.round(calculatedDose * 4) / 4;
+        }
+      }
       // Make sure we don't go below 1 for items that can't be fractional
-      if (['tablet', 'capsule', 'spray', 'application', 'patch'].includes(denominatorUnit) && primaryDose < 1) {
+      else if (['capsule', 'spray', 'application', 'patch'].includes(denominatorUnit) && calculatedDose < 1) {
         primaryDose = 1;
+      } else {
+        primaryDose = calculatedDose;
       }
     }
     // Case 3: User entered another unit
@@ -112,7 +127,8 @@ export function createFhirRepresentation(
   };
   
   // If medication has strength ratio, include both representations in FHIR format
-  let additionalDosage: { value: number; unit: string } | undefined = undefined;
+  let additionalDosages: Array<{ value: number; unit: string }> = [];
+  
   if (hasStrengthRatio) {
     const dualDosage = calculateDualDosage(medication, dosage);
     
@@ -122,17 +138,62 @@ export function createFhirRepresentation(
       const numeratorUnit = strengthRatio.numerator.unit;
       const denominatorUnit = strengthRatio.denominator.unit;
       
-      // Determine which is the additional dosage based on what the user entered
-      if (dosage.unit === numeratorUnit) {
-        // User entered the weight/concentration unit (mg, mcg, %), so additional is form unit
-        additionalDosage = dualDosage.volumeBased;
-      } else if (dosage.unit === denominatorUnit || 
-                dosage.unit === 'tablet' || 
-                dosage.unit === 'capsule' || 
-                dosage.unit === 'spray' || 
-                dosage.unit === 'application') {
-        // User entered the form unit, so additional is weight/concentration
-        additionalDosage = dualDosage.weightBased;
+      // Special handling for creams with Topiclick dispenser
+      if (medication.doseForm === 'Cream') {
+        const doseFormInfo = doseForms[medication.doseForm];
+        const hasDispenser = doseFormInfo.hasSpecialDispenser && doseFormInfo.dispenserConversion;
+        
+        if (hasDispenser && doseFormInfo.dispenserConversion) {
+          const dispenserUnit = doseFormInfo.dispenserConversion.dispenserUnit;
+          const conversionRatio = doseFormInfo.dispenserConversion.conversionRatio;
+          
+          if (dosage.unit === dispenserUnit) {
+            // User entered clicks, add both mL and mg
+            additionalDosages.push(dualDosage.volumeBased); // mL
+            additionalDosages.push(dualDosage.weightBased); // mg
+          } 
+          else if (dosage.unit === 'mL') {
+            // User entered mL, add both clicks and mg
+            const clickValue = Math.round(dosage.value * conversionRatio);
+            additionalDosages.push({ value: clickValue, unit: dispenserUnit });
+            additionalDosages.push(dualDosage.weightBased);
+          }
+          else if (dosage.unit === numeratorUnit) {
+            // User entered mg, add both mL and clicks
+            const mlValue = dualDosage.volumeBased.value;
+            const clickValue = Math.round(mlValue * conversionRatio);
+            additionalDosages.push(dualDosage.volumeBased);
+            additionalDosages.push({ value: clickValue, unit: dispenserUnit });
+          }
+          else if (dosage.unit === 'application') {
+            // User entered application, add strength unit
+            additionalDosages.push(dualDosage.weightBased);
+          }
+        }
+        else {
+          // Regular cream without dispenser
+          if (dosage.unit === numeratorUnit) {
+            // User entered weight/concentration unit, add form unit
+            additionalDosages.push(dualDosage.volumeBased);
+          } else if (dosage.unit === 'application' || dosage.unit === denominatorUnit) {
+            // User entered form unit, add weight/concentration
+            additionalDosages.push(dualDosage.weightBased);
+          }
+        }
+      }
+      // Standard dual dosage for other medication forms
+      else {
+        if (dosage.unit === numeratorUnit) {
+          // User entered the weight/concentration unit (mg, mcg, %), so additional is form unit
+          additionalDosages.push(dualDosage.volumeBased);
+        } else if (dosage.unit === denominatorUnit || 
+                  dosage.unit === 'tablet' || 
+                  dosage.unit === 'capsule' || 
+                  dosage.unit === 'spray' || 
+                  dosage.unit === 'application') {
+          // User entered the form unit, so additional is weight/concentration
+          additionalDosages.push(dualDosage.weightBased);
+        }
       }
     }
   }
@@ -150,19 +211,17 @@ export function createFhirRepresentation(
     }
   };
   
-  // Add additional dosage if present
-  if (additionalDosage && additionalDosage.value !== undefined) {
-    fhirRepresentation.dosageInstruction.extension = [
-      {
-        url: "http://example.org/fhir/StructureDefinition/additional-dosage",
-        valueDosage: {
-          doseQuantity: {
-            value: additionalDosage.value,
-            unit: additionalDosage.unit
-          }
+  // Add additional dosages if present
+  if (additionalDosages.length > 0) {
+    fhirRepresentation.dosageInstruction.extension = additionalDosages.map(additionalDosage => ({
+      url: "http://example.org/fhir/StructureDefinition/additional-dosage",
+      valueDosage: {
+        doseQuantity: {
+          value: additionalDosage.value,
+          unit: additionalDosage.unit
         }
       }
-    ];
+    }));
   }
   
   // Add special instructions if provided
@@ -239,12 +298,54 @@ export function generateSignature(
       }
       // For creams and other applications
       else if (['Cream', 'Gel', 'Foam', 'Shampoo'].includes(medication.doseForm)) {
-        if (dosage.unit === 'application') {
-          // If user selected application, show "1 application (0.05%)"
-          doseText = `${dualDosage.volumeBased.value} ${dosage.unit}${dualDosage.volumeBased.value !== 1 ? 's' : ''} (${dualDosage.weightBased.value}${dualDosage.weightBased.unit})`;
-        } else {
-          // If user selected the strength unit, show "0.05% (1 application)"
-          doseText = `${dualDosage.weightBased.value}${dualDosage.weightBased.unit} (${dualDosage.volumeBased.value} application${dualDosage.volumeBased.value !== 1 ? 's' : ''})`;
+        const doseFormInfo = doseForms[medication.doseForm];
+        const hasDispenser = doseFormInfo.hasSpecialDispenser && doseFormInfo.dispenserConversion;
+        
+        // Handle Topiclick or other special dispensers
+        if (hasDispenser && doseFormInfo.dispenserConversion) {
+          const dispenserUnit = doseFormInfo.dispenserConversion.dispenserUnit;
+          const dispenserPluralUnit = doseFormInfo.dispenserConversion.dispenserPluralUnit;
+          const conversionRatio = doseFormInfo.dispenserConversion.conversionRatio;
+          
+          if (dosage.unit === dispenserUnit) {
+            // If user selected clicks, show "2 clicks (0.5 mL, 50 mg)"
+            const mlValue = dualDosage.volumeBased.value;
+            const mgValue = dualDosage.weightBased.value;
+            
+            doseText = `${dosage.value} ${dosage.value === 1 ? dispenserUnit : dispenserPluralUnit} (${mlValue} mL, ${mgValue} ${dualDosage.weightBased.unit})`;
+          } 
+          else if (dosage.unit === 'mL') {
+            // If user selected mL, show "0.5 mL (2 clicks, 50 mg)"
+            const clickValue = Math.round(dosage.value * conversionRatio);
+            const mgValue = dualDosage.weightBased.value;
+            
+            doseText = `${dosage.value} mL (${clickValue} ${clickValue === 1 ? dispenserUnit : dispenserPluralUnit}, ${mgValue} ${dualDosage.weightBased.unit})`;
+          }
+          else if (dosage.unit === dualDosage.weightBased.unit) {
+            // If user selected mg, show "50 mg (0.5 mL, 2 clicks)"
+            const mlValue = dualDosage.volumeBased.value;
+            const clickValue = Math.round(mlValue * conversionRatio);
+            
+            doseText = `${dosage.value} ${dosage.unit} (${mlValue} mL, ${clickValue} ${clickValue === 1 ? dispenserUnit : dispenserPluralUnit})`;
+          }
+          else if (dosage.unit === 'application') {
+            // If user selected application, show "1 application (0.05%)"
+            doseText = `${dualDosage.volumeBased.value} ${dosage.unit}${dualDosage.volumeBased.value !== 1 ? 's' : ''} (${dualDosage.weightBased.value}${dualDosage.weightBased.unit})`;
+          }
+          else {
+            // Default formatting
+            doseText = `${dosage.value} ${dosage.unit}`;
+          }
+        }
+        else {
+          // Regular cream without special dispenser
+          if (dosage.unit === 'application') {
+            // If user selected application, show "1 application (0.05%)"
+            doseText = `${dualDosage.volumeBased.value} ${dosage.unit}${dualDosage.volumeBased.value !== 1 ? 's' : ''} (${dualDosage.weightBased.value}${dualDosage.weightBased.unit})`;
+          } else {
+            // If user selected the strength unit, show "0.05% (1 application)"
+            doseText = `${dualDosage.weightBased.value}${dualDosage.weightBased.unit} (${dualDosage.volumeBased.value} application${dualDosage.volumeBased.value !== 1 ? 's' : ''})`;
+          }
         }
       }
       // Default for other types
