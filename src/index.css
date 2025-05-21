@@ -1,0 +1,326 @@
+:root {
+  --primary: #2563eb;
+  --primary-light: #3b82f6;
+  --primary-dark: #1d4ed8;
+  --secondary: #64748b;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --info: #06b6d4;
+  --light: #f9fafb;
+  --dark: #1e293b;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--light);
+  color: var(--dark);
+}
+
+/* Compact, Professional Header Styles */
+.app-header {
+  background-color: white;
+  border-color: var(--gray-200);
+}
+
+.app-header h1 {
+  color: var(--primary-dark);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Card Styles */
+.card {
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 6px rgba(0,0,0,0.05);
+  margin-bottom: 1.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.card-header {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.card-header h3 {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* Form Control Styles */
+.form-control, .form-select {
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-color: var(--gray-200);
+  box-shadow: none;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+}
+
+.form-control::placeholder {
+  color: var(--gray-400);
+}
+
+.form-check-input:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* Button Styles */
+.btn {
+  border-radius: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(29, 78, 216, 0.25);
+}
+
+.btn-outline-secondary {
+  color: var(--secondary);
+  border-color: var(--gray-300);
+}
+
+.btn-outline-secondary:hover {
+  background-color: var(--gray-100);
+  color: var(--dark);
+  border-color: var(--gray-400);
+}
+
+/* Result Panel Styles */
+.result-panel {
+  background-color: var(--gray-100);
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border-left: 4px solid var(--primary);
+  margin-bottom: 1.5rem;
+}
+
+.result-panel h4 {
+  color: var(--primary-dark);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.result-panel pre {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+  box-shadow: inset 0 0 0 1px var(--gray-200);
+}
+
+/* For signature output */
+.signature-output .fs-5 {
+  font-weight: 500;
+  padding: 1rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  border: 1px solid var(--gray-200);
+}
+
+/* Labels and Text */
+label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--gray-700);
+}
+
+.text-muted {
+  color: var(--gray-500) !important;
+}
+
+.form-text {
+  color: var(--gray-500);
+  font-size: 0.875rem;
+}
+
+/* Alert Styles */
+.alert {
+  border-radius: 0.5rem;
+  padding: 1rem;
+  border: none;
+}
+
+.alert-info {
+  background-color: rgba(6, 182, 212, 0.1);
+  color: var(--info);
+}
+
+.alert-danger {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+/* Footer */
+footer {
+  margin-top: 3rem;
+  font-size: 0.875rem;
+}
+
+/* Compact Form Styles */
+.compact-form .form-control,
+.compact-form .form-select {
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  height: auto;
+}
+
+.compact-form .btn-sm {
+  font-size: 0.8125rem;
+  padding: 0.375rem 0.75rem;
+}
+
+.input-group-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--secondary);
+  margin-bottom: 0.25rem;
+}
+
+.input-placeholder .form-select.disabled {
+  background-color: var(--gray-100);
+  color: var(--gray-400);
+  pointer-events: none;
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+/* Custom Dropdown Styles */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  z-index: 1000;
+  border: 1px solid var(--gray-200);
+  border-radius: 0.375rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
+  background-color: white;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  display: none;
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+.dropdown-item {
+  padding: 0.5rem 1rem;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.dropdown-item:hover {
+  background-color: var(--gray-100);
+}
+
+.dropdown-header {
+  padding: 0.5rem 1rem;
+  margin-bottom: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--secondary);
+  text-transform: uppercase;
+}
+
+/* Output Panel Styles */
+.output-panel {
+  border: 1px solid var(--gray-200);
+  border-radius: 0.375rem;
+  background: white;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.output-panel-header {
+  border-bottom: 1px solid var(--gray-200);
+  padding: 0.75rem 1rem;
+  background-color: var(--gray-100);
+}
+
+.output-panel-header h3 {
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.output-panel-body {
+  padding: 1rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+  .card-body {
+    padding: 1.25rem;
+  }
+  
+  .app-header {
+    padding: 1rem 0;
+  }
+  
+  .app-header h1 {
+    font-size: 1.25rem;
+  }
+  
+  .container-fluid {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  .output-panel {
+    margin-top: 1rem;
+  }
+}

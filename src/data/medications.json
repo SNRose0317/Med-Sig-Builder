@@ -1,0 +1,256 @@
+[
+  {
+    "id": "med-123",
+    "name": "Testosterone Cypionate",
+    "type": "medication",
+    "isActive": true,
+    "code": {
+      "coding": [
+        { "display": "Testosterone Cypionate" }
+      ]
+    },
+    "doseForm": "Vial",
+    "totalVolume": {
+      "value": 5,
+      "unit": "mL"
+    },
+    "extension": [
+      {
+        "us-controlled": true,
+        "schedule": "III"
+      }
+    ],
+    "ingredient": [
+      {
+        "name": "Testosterone Cypionate",
+        "strengthRatio": {
+          "numerator": {
+            "value": 200,
+            "unit": "mg"
+          },
+          "denominator": {
+            "value": 1,
+            "unit": "mL"
+          }
+        }
+      }
+    ],
+    "allowedRoutes": ["Intramuscularly"],
+    "defaultRoute": "Intramuscularly",
+    "commonDosages": [
+      {
+        "value": 100,
+        "unit": "mg",
+        "frequency": "once_per_week"
+      },
+      {
+        "value": 200,
+        "unit": "mg",
+        "frequency": "once_per_two_weeks"
+      }
+    ],
+    "dosageConstraints": {
+      "minDose": {
+        "value": 50,
+        "unit": "mg"
+      },
+      "maxDose": {
+        "value": 400,
+        "unit": "mg"
+      }
+    }
+  },
+  {
+    "id": "med-124",
+    "name": "Amoxicillin",
+    "type": "medication",
+    "isActive": true,
+    "code": {
+      "coding": [
+        { "display": "Amoxicillin" }
+      ]
+    },
+    "doseForm": "Capsule",
+    "extension": [],
+    "ingredient": [
+      {
+        "name": "Amoxicillin",
+        "strengthRatio": {
+          "numerator": {
+            "value": 500,
+            "unit": "mg"
+          },
+          "denominator": {
+            "value": 1,
+            "unit": "capsule"
+          }
+        }
+      }
+    ],
+    "allowedRoutes": ["Orally"],
+    "defaultRoute": "Orally",
+    "commonDosages": [
+      {
+        "value": 500,
+        "unit": "mg",
+        "frequency": "three_times_daily"
+      },
+      {
+        "value": 875,
+        "unit": "mg",
+        "frequency": "twice_daily"
+      }
+    ],
+    "dosageConstraints": {
+      "minDose": {
+        "value": 250,
+        "unit": "mg"
+      },
+      "maxDose": {
+        "value": 1000,
+        "unit": "mg"
+      }
+    }
+  },
+  {
+    "id": "med-125",
+    "name": "Prednisone",
+    "type": "medication",
+    "isActive": true,
+    "code": {
+      "coding": [
+        { "display": "Prednisone" }
+      ]
+    },
+    "doseForm": "Tablet",
+    "extension": [],
+    "ingredient": [
+      {
+        "name": "Prednisone",
+        "strengthRatio": {
+          "numerator": {
+            "value": 20,
+            "unit": "mg"
+          },
+          "denominator": {
+            "value": 1,
+            "unit": "tablet"
+          }
+        }
+      }
+    ],
+    "allowedRoutes": ["Orally"],
+    "defaultRoute": "Orally",
+    "commonDosages": [
+      {
+        "value": 20,
+        "unit": "mg",
+        "frequency": "once_daily"
+      }
+    ],
+    "dosageConstraints": {
+      "minDose": {
+        "value": 5,
+        "unit": "mg"
+      },
+      "maxDose": {
+        "value": 60,
+        "unit": "mg"
+      }
+    }
+  },
+  {
+    "id": "med-126",
+    "name": "Fluticasone Propionate",
+    "type": "medication",
+    "isActive": true,
+    "code": {
+      "coding": [
+        { "display": "Fluticasone Propionate" }
+      ]
+    },
+    "doseForm": "Nasal Spray",
+    "extension": [],
+    "ingredient": [
+      {
+        "name": "Fluticasone Propionate",
+        "strengthRatio": {
+          "numerator": {
+            "value": 50,
+            "unit": "mcg"
+          },
+          "denominator": {
+            "value": 1,
+            "unit": "spray"
+          }
+        }
+      }
+    ],
+    "allowedRoutes": ["Intranasal"],
+    "defaultRoute": "Intranasal",
+    "commonDosages": [
+      {
+        "value": 2,
+        "unit": "spray",
+        "frequency": "twice_daily"
+      }
+    ],
+    "dosageConstraints": {
+      "minDose": {
+        "value": 1,
+        "unit": "spray"
+      },
+      "maxDose": {
+        "value": 2,
+        "unit": "spray"
+      }
+    }
+  },
+  {
+    "id": "med-127",
+    "name": "Clobetasol Propionate",
+    "type": "medication",
+    "isActive": true,
+    "code": {
+      "coding": [
+        { "display": "Clobetasol Propionate" }
+      ]
+    },
+    "doseForm": "Cream",
+    "extension": [],
+    "ingredient": [
+      {
+        "name": "Clobetasol Propionate",
+        "strengthRatio": {
+          "numerator": {
+            "value": 0.05,
+            "unit": "%"
+          },
+          "denominator": {
+            "value": 1,
+            "unit": "application"
+          }
+        }
+      }
+    ],
+    "allowedRoutes": ["Topically"],
+    "defaultRoute": "Topically",
+    "commonDosages": [
+      {
+        "value": 1,
+        "unit": "application",
+        "frequency": "twice_daily"
+      }
+    ],
+    "dosageConstraints": {
+      "minDose": {
+        "value": 1,
+        "unit": "application"
+      },
+      "maxDose": {
+        "value": 1,
+        "unit": "application"
+      }
+    }
+  }
+]
