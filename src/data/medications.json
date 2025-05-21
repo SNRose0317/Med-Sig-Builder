@@ -1,5 +1,63 @@
 [
   {
+    "id": "med-128",
+    "name": "Testosterone 100mg/mL Cream",
+    "type": "medication",
+    "isActive": true,
+    "code": {
+      "coding": [
+        { "display": "Testosterone 100mg/mL Cream" }
+      ]
+    },
+    "doseForm": "Cream",
+    "extension": [],
+    "dispenserInfo": {
+      "type": "Topiclick",
+      "unit": "click",
+      "pluralUnit": "clicks",
+      "conversionRatio": 4
+    },
+    "ingredient": [
+      {
+        "name": "Testosterone",
+        "strengthRatio": {
+          "numerator": {
+            "value": 100,
+            "unit": "mg"
+          },
+          "denominator": {
+            "value": 1,
+            "unit": "mL"
+          }
+        }
+      }
+    ],
+    "allowedRoutes": ["Topically"],
+    "defaultRoute": "Topically",
+    "commonDosages": [
+      {
+        "value": 2,
+        "unit": "click",
+        "frequency": "twice_daily"
+      },
+      {
+        "value": 4,
+        "unit": "click",
+        "frequency": "once_daily"
+      }
+    ],
+    "dosageConstraints": {
+      "minDose": {
+        "value": 1,
+        "unit": "click"
+      },
+      "maxDose": {
+        "value": 8,
+        "unit": "click"
+      }
+    }
+  },
+  {
     "id": "med-123",
     "name": "Testosterone Cypionate",
     "type": "medication",

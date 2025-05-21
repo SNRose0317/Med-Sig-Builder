@@ -70,6 +70,12 @@ Medications can have complex dosing representations:
 - May be dosed by application amount or by weight/percentage
 - The application provides appropriate units
 
+#### For Special Dispensers (e.g., Topiclick):
+- Supports metered-dose dispensers like Topiclick for topical creams
+- Allows dosing in "clicks" (e.g., a standard Topiclick where 4 clicks = 1 mL)
+- Automatically calculates conversions between clicks, volume (mL), and active ingredient (mg)
+- For example: a 100mg/mL testosterone cream with 2 clicks = 0.5 mL = 50 mg
+
 ### 3. Frequency Mapping
 
 Each frequency selection maps to:
@@ -285,3 +291,13 @@ interface Route {
   - Special Instructions: In each nostril
 - Output:
   - "Spray 2 sprays (100 mcg) into each nostril once daily"
+
+### Topical Medication with Topiclick Dispenser
+- Input:
+  - Medication: Testosterone 100mg/mL Cream with Topiclick
+  - Dose: 2 clicks (0.5 mL, 50 mg)
+  - Route: Topical
+  - Frequency: Every morning
+  - Special Instructions: To upper arms, shoulders, or thighs
+- Output:
+  - "Apply 2 clicks (50 mg) topically to upper arms, shoulders, or thighs every morning"

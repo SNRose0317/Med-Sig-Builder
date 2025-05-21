@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Medication } from '../types';
-import medications from '../data/medications.json';
+import { getMedications } from '../services/medicationService';
 
 interface MedicationSelectorProps {
   selectedMedication: Medication | null;
@@ -12,6 +12,27 @@ const MedicationSelector: React.FC<MedicationSelectorProps> = ({
   onSelectMedication
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [medications, setMedications] = useState<Medication[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Fetch medications from Supabase on component mount
+  useEffect(() => {
+    const fetchMedications = async () => {
+      try {
+        setIsLoading(true);
+        const meds = await getMedications();
+        setMedications(meds);
+      } catch (err) {
+        console.error('Error fetching medications:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load medications');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchMedications();
+  }, []);
   
   const handleSelect = (medication: Medication) => {
     onSelectMedication(medication);
@@ -47,23 +68,45 @@ const MedicationSelector: React.FC<MedicationSelectorProps> = ({
           className={`dropdown-menu w-100 ${isOpen ? 'show' : ''}`} 
           style={{maxHeight: '300px', overflowY: 'auto'}}
         >
-          {(medications as Medication[]).map((medication) => (
-            <li key={medication.id}>
-              <button 
-                className="dropdown-item" 
-                type="button"
-                onClick={() => handleSelect(medication)}
-              >
-                <div className="d-flex flex-column">
-                  <span>{medication.name}</span>
-                  <small className="text-muted">
-                    {medication.ingredient[0]?.strengthRatio && formatStrength(medication)}
-                    {medication.doseForm && ` (${medication.doseForm})`}
-                  </small>
+          {isLoading ? (
+            <li className="dropdown-item text-center">
+              <div className="d-flex align-items-center justify-content-center">
+                <div className="spinner-border spinner-border-sm me-2" role="status">
+                  <span className="visually-hidden">Loading...</span>
                 </div>
-              </button>
+                <span>Loading medications...</span>
+              </div>
             </li>
-          ))}
+          ) : error ? (
+            <li className="dropdown-item text-danger">
+              <div className="d-flex align-items-center">
+                <i className="bi bi-exclamation-triangle me-2"></i>
+                <span>Error loading medications</span>
+              </div>
+            </li>
+          ) : medications.length === 0 ? (
+            <li className="dropdown-item text-center text-muted">
+              No medications found
+            </li>
+          ) : (
+            medications.map((medication) => (
+              <li key={medication.id}>
+                <button 
+                  className="dropdown-item" 
+                  type="button"
+                  onClick={() => handleSelect(medication)}
+                >
+                  <div className="d-flex flex-column">
+                    <span>{medication.name}</span>
+                    <small className="text-muted">
+                      {medication.ingredient[0]?.strengthRatio && formatStrength(medication)}
+                      {medication.doseForm && ` (${medication.doseForm})`}
+                    </small>
+                  </div>
+                </button>
+              </li>
+            ))
+          )}
         </ul>
       </div>
       

@@ -20,6 +20,13 @@ export interface Medication {
     schedule?: string;
     [key: string]: any;
   }>;
+  dispenserInfo?: {
+    type: string;               // "Topiclick", "Pump", "Oral Syringe", etc.
+    unit: string;               // "click", "pump", "mL", etc.
+    pluralUnit: string;         // "clicks", "pumps", "mL", etc.
+    conversionRatio: number;    // 4 clicks = 1mL, 1 pump = 0.5mL, etc.
+    maxAmountPerDose?: number;  // Optional maximum per single dose
+  };
   ingredient: Array<{
     name: string;
     strengthRatio: {

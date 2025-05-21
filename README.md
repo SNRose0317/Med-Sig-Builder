@@ -1,76 +1,113 @@
 # Medication Signature Builder
 
-A user-friendly web application for creating standardized medication instructions (known as medication "sigs" in healthcare) based on medication details, dosage, and frequency.
+A web application for creating standardized medication signatures (instructions) for prescriptions. The application helps healthcare providers create clear, consistent medication instructions that can be included in prescriptions.
 
-## What is a Medication Signature?
+## Features
 
-A medication signature (or "sig") is the part of a prescription that tells a patient how to take their medication. For example:
+- Create medication signatures using a structured form
+- Select from common medications with predefined dose forms
+- Support for special dispensers like Topiclick for creams
+- Automatic conversion between different units (mg, mL, tablets, etc.)
+- Generate human-readable instructions that follow best practices
+- Manage medications in a database
 
-> "Take 1 tablet by mouth twice daily"
+## Getting Started
 
-This application helps healthcare providers create these instructions in a standardized format, ensuring accuracy and consistency.
+### Prerequisites
 
-## How It Works
+- Node.js v16+
+- npm or yarn
+- Supabase account (for database functionality)
 
-1. **Select a Medication**: Choose from a dropdown list of medications
-2. **Enter the Dose**: Specify how much medication to take (in mg, mL, tablets, etc.)
-3. **Choose How Often**: Select a frequency (daily, twice daily, weekly, etc.)
-4. **Add Special Instructions**: Include any additional directions if needed
-5. **Generate**: The app creates a properly formatted medication signature
+### Installation
 
-The application automatically adjusts the available options based on the type of medication selected. For example, if you select an injectable medication, it will show options for injection routes. If you select a tablet, it will show oral routes.
-
-## Understanding Medication Signatures
-
-A complete medication signature typically includes:
-
-- **Verb**: The action to take (take, inject, apply)
-- **Dose**: The amount of medication (1 tablet, 500 mg, 2 sprays)
-- **Route**: How to administer the medication (by mouth, intramuscularly, topically)
-- **Frequency**: When to take the medication (daily, twice daily, weekly)
-- **Special Instructions**: Additional directions (with food, in left arm)
-
-For example:
-- "**Take** (verb) **1 tablet** (dose) **by mouth** (route) **twice daily** (frequency) **with food** (special instruction)"
-- "**Inject** (verb) **0.5 mL** (dose) **subcutaneously** (route) **once weekly** (frequency) **in the abdomen** (special instruction)"
-
-## Technical Details
-
-### For Developers
-
-The Medication Signature Builder is built with:
-- React 18
-- TypeScript
-- Vite
-- Bootstrap 5 for styling
-
-### Data Model
-
-The application uses several key data structures:
-
-- **Medication**: Contains details about the medication including name, form, strength, ingredients, and available routes
-- **Route**: Information about how the medication is administered
-- **Frequency**: Defines when the medication should be taken
-- **FHIR Compatibility**: Outputs data that can be used in healthcare information systems
-
-For more detailed information on how medication signatures are constructed and the logic behind the application, please see the [detailed documentation](./DOCUMENTATION.md).
-
-## Installation
-
+1. Clone the repository:
 ```bash
-# Clone the repository
-git clone https://github.com/SNRose0317/Med-Sig-Builder.git
-
-# Navigate to the project directory
+git clone https://github.com/yourusername/med-sig-builder.git
 cd med-sig-builder
+```
 
-# Install dependencies
+2. Install dependencies:
+```bash
 npm install
+```
 
-# Start the development server
+3. Copy `.env.example` to `.env` and update with your Supabase credentials:
+```bash
+cp .env.example .env
+```
+
+Update the `.env` file with your Supabase URL and anon key:
+```
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+4. Set up the database schema in Supabase (multiple methods available):
+   
+   **Method 1: Using our setup script:**
+   ```bash
+   npm run setup-db
+   ```
+   This script will:
+   - Check if your database is properly configured
+   - Use your Supabase service role key (if available) to set up the tables automatically
+   - Provide detailed instructions if the anon key doesn't have sufficient permissions
+   
+   **Method 2: Manual setup via SQL Editor:**
+   - Log in to your [Supabase Dashboard](https://app.supabase.com/)
+   - Select your project
+   - Navigate to the SQL Editor
+   - Create a new query
+   - Copy and paste the contents of `supabase/medications-schema.sql` into the editor
+   - Run the query to create the table, policies, and triggers
+   
+   **For more options**, see our [Database Setup Guide](docs/DatabaseSetup.md) which covers:
+   - Using the Supabase CLI
+   - Creating migrations
+   - Programmatic API access
+   - Using Prisma with Supabase
+
+5. Start the development server:
+```bash
 npm run dev
 ```
 
+6. Open your browser and navigate to `http://localhost:5173` (or whatever port Vite assigns)
+
+## Project Structure
+
+- `src/` - Source code
+  - `components/` - React components
+  - `data/` - Local data (used as fallback or for initialization)
+  - `services/` - API services for external data sources
+  - `tables/` - Reference data (frequencies, routes, verbs, etc.)
+  - `utils/` - Utility functions
+
+## Database Connection Troubleshooting
+
+If you see the error "Database connection error: Database error: relation 'public.medications' does not exist", this means the medications table hasn't been created in your Supabase database yet. 
+
+To fix this:
+
+1. Make sure your Supabase URL and anon key are correctly set in the `.env` file.
+2. Follow step 4 in the installation instructions to create the medications table in your Supabase database.
+3. If you want to verify if your connection to Supabase is working, check your network requests in the browser developer tools.
+
+If you're still having issues connecting to Supabase:
+
+1. Check if the Supabase service is running by logging into your Supabase dashboard
+2. Verify there are no restrictions on your API keys
+3. Check if your database migrations ran successfully
+
+## Development Documentation
+
+For detailed information about the application architecture and design, see:
+
+- [Architecture Documentation](docs/Architecture.md)
+- [Topiclick Dispenser Integration](docs/TopiclickDispenser.md)
+- [Main Documentation](DOCUMENTATION.md)
+
 ## License
 
-MIT
+This project is licensed under the MIT License - see the LICENSE file for details.

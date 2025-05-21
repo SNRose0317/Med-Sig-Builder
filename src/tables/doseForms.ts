@@ -7,6 +7,12 @@ export interface DoseForm {
   applicableRoutes: string[];
   defaultRoute: string;
   verb: string;
+  hasSpecialDispenser?: boolean;
+  dispenserConversion?: {
+    dispenserUnit: string;
+    dispenserPluralUnit: string;
+    conversionRatio: number; // How many dispenser units equal 1 unit (e.g., 4 clicks = 1 mL)
+  };
 }
 
 export const doseForms: Record<string, DoseForm> = {
@@ -28,7 +34,13 @@ export const doseForms: Record<string, DoseForm> = {
     pluralUnit: "applications",
     applicableRoutes: ["Topically", "Rectally", "Vaginally"],
     defaultRoute: "Topically",
-    verb: "Apply"
+    verb: "Apply",
+    hasSpecialDispenser: true,
+    dispenserConversion: {
+      dispenserUnit: "click",
+      dispenserPluralUnit: "clicks",
+      conversionRatio: 4 // 4 clicks = 1 mL
+    }
   },
   "Dropper": {
     id: "doseform-3",
