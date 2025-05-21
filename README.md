@@ -64,7 +64,7 @@ Defines the timing for medication administration:
 
 ```bash
 # Clone the repository
-git clone [repository-url]
+git clone https://github.com/SNRose0317/Med-Sig-Builder.git
 
 # Navigate to the project directory
 cd med-sig-builder
