@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Medication } from '../types';
-import routes, { routeOptions } from '../tables/routes';
-import doseForms from '../tables/doseForms';
+import { Medication } from '../types/index';
+import { routes, routeOptions, doseForms } from '../constants/medication-data';
 
 interface RouteSelectorProps {
   medication: Medication | null;

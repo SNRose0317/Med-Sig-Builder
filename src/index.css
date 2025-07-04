@@ -346,6 +346,22 @@ footer {
   font-weight: normal;
 }
 
+/* Gender Badge Styles */
+.gender-male {
+  background-color: #3498db !important;
+  color: white;
+}
+
+.gender-female {
+  background-color: #e91e63 !important;
+  color: white;
+}
+
+.gender-other {
+  background-color: #9c27b0 !important;
+  color: white;
+}
+
 /* Dual Dose Input Styles */
 .dual-dose-container {
   display: flex;
