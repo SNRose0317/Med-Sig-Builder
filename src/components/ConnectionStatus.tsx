@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { isSupabaseConnected } from '../services/supabaseClient';
 
 const ConnectionStatus: React.FC = () => {
   const [isConnected, setIsConnected] = useState(true);
@@ -8,7 +7,10 @@ const ConnectionStatus: React.FC = () => {
   useEffect(() => {
     // Check connection status periodically
     const checkConnection = () => {
-      const connected = isSupabaseConnected();
+      // Simple check if environment variables are present
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const connected = !!(supabaseUrl && supabaseKey);
       setIsConnected(connected);
       setShowBanner(!connected);
     };

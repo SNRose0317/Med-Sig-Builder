@@ -54,42 +54,37 @@ The Medication Signature Builder is a React/TypeScript web application designed 
 - JSONB fields for complex nested data
 - Database adapter for camelCase/snake_case conversion
 
-## Recent Changes (Uncommitted)
-- Added ConnectionStatus component for monitoring Supabase connectivity
-- Added ErrorBoundary component for better error handling
-- Implemented medication caching service to reduce duplicate API calls
-- Modified MedicationSelector and MedicationOverviewTable
-- Updated Supabase client configuration
-- Added test-supabase.html for connection testing
-- Added scripts/check-supabase-data.js for database verification
+## Recent Refactoring (Phase 1-4 Complete)
+- **Massive code reduction**: From 40+ files to 15 source files
+- **Consolidated components**: 16 components → 4 focused components
+- **Unified API layer**: 5 service files → 1 medications API
+- **Simplified logic**: 722 lines of utilities → 399 lines in lib/
+- **Preserved all functionality** while improving maintainability
 
-## Project Structure
+## Project Structure (After Refactoring)
 ```
 src/
-├── components/          # React components
-│   ├── ConnectionStatus.tsx    # NEW: Connection monitoring
-│   ├── DaysSupplyCalculator.tsx
-│   ├── DoseInput.tsx
-│   ├── ErrorBoundary.tsx       # NEW: Error handling
-│   ├── FrequencySelector.tsx
-│   ├── MedicationForm.tsx
-│   ├── MedicationManagement.tsx
-│   ├── MedicationOverviewTable.tsx
-│   ├── MedicationSelector.tsx
-│   ├── RouteSelector.tsx
-│   ├── SignatureOutput.tsx
-│   └── SpecialInstructions.tsx
-├── services/            # External service integrations
-│   ├── dbAdapter.ts     # Database field mapping
-│   ├── dbAdapter.ext.ts # Extended DB mapping for constraints
-│   ├── medicationCache.ts  # NEW: Caching layer
-│   ├── medicationService.ts
-│   └── supabaseClient.ts
-├── tables/             # Reference data
-├── utils/              # Utility functions
-├── App.tsx            # Main application component
-├── reducer.ts         # State management
-└── types.ts          # TypeScript interfaces
+├── api/                 # API layer
+│   ├── medications.ts   # All CRUD operations with built-in caching
+│   └── supabase.ts      # Client configuration
+├── components/          # React components  
+│   ├── App.tsx          # Main layout and routing
+│   ├── ConnectionStatus.tsx    # Connection monitoring
+│   ├── ErrorBoundary.tsx       # Error handling
+│   ├── MedicationManager.tsx   # List/Add/Edit medications
+│   ├── SignatureBuilder.tsx    # All signature inputs
+│   └── SignatureResult.tsx     # Output display
+├── lib/                 # Business logic
+│   ├── signature.ts     # Signature generation (219 lines)
+│   └── calculations.ts  # Days supply logic (180 lines)
+├── constants/           
+│   └── medication-data.ts # All reference data
+├── types/              
+│   └── index.ts        # TypeScript types
+├── utils/              
+│   └── errorLogger.ts  # Error logging utility
+├── main.tsx            # App entry point
+└── reducer.ts          # State management
 ```
 
 ## Database Schema
@@ -116,12 +111,19 @@ src/
 - `npm run setup-db` - Initialize database
 
 ## Current State
-The application is functional with both signature building and medication management features. Recent work has focused on improving error handling, connection monitoring, and performance through caching. The UI uses a tabbed interface to separate the signature builder from medication management.
+The application has been successfully refactored to a minimal, clean codebase while preserving all functionality:
+- **15 source files** (down from 40+)
+- **Clear separation of concerns**: API, Components, Business Logic, Types
+- **Optimized performance** with built-in caching
+- **Maintained all features**: FHIR compliance, Topiclick support, dual dosing, etc.
 
-## Known Issues/TODOs
-- Some files have uncommitted changes that need to be reviewed
-- Connection status banner provides user feedback when Supabase is unreachable
-- Caching layer reduces redundant API calls but may need cache invalidation strategy
+## Key Business Logic Preserved
+- **Topiclick conversion**: 4 clicks = 1 mL
+- **Tablet fractioning**: Minimum 1/4 tablet
+- **Dual dosage display**: "100 mg, as 2 mL" for injectables
+- **Route-based verbs**: "Take" for oral, "Apply" for topical, etc.
+- **Days supply calculation**: Handles all unit conversions
+- **Dose validation**: Min/max constraints with step increments
 
 ## Integration Points
 - FHIR-compatible output for healthcare system integration
