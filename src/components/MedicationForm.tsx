@@ -4,7 +4,7 @@ import doseForms, { doseFormOptions } from '../tables/doseForms';
 import dispenserTypes, { dispenserOptions } from '../tables/dispensers';
 import routes, { routeOptions } from '../tables/routes';
 import frequencies, { frequencyOptions } from '../tables/frequencyTable';
-import DaysSupplyCalculator from './DaysSupplyCalculator';
+import EmbeddedSignatureBuilder from './EmbeddedSignatureBuilder';
 import { v4 as uuidv4 } from 'uuid';
 
 interface MedicationFormProps {
@@ -40,10 +40,6 @@ const MedicationForm: React.FC<MedicationFormProps> = ({ medication, isAddMode, 
   const [availableDispenserTypes, setAvailableDispenserTypes] = useState<string[]>([]);
   const [availableRoutes, setAvailableRoutes] = useState<string[]>([]);
   
-  // State for the days supply calculator
-  const [currentDoseValue, setCurrentDoseValue] = useState<number>(0);
-  const [currentDoseUnit, setCurrentDoseUnit] = useState<string>('');
-  const [currentFrequency, setCurrentFrequency] = useState<string>('');
 
   // Update form when medication prop changes
   useEffect(() => {
@@ -740,74 +736,20 @@ const MedicationForm: React.FC<MedicationFormProps> = ({ medication, isAddMode, 
         </div>
       </div>
       
-      {formData.packageInfo && formData.packageInfo.quantity > 0 && formData.packageInfo.unit && (
+      
+      {/* Signature Testing Section */}
+      {formData.name && formData.doseForm && formData.ingredient[0]?.strengthRatio.numerator.value > 0 && (
         <div className="form-section">
-          <h4>Days Supply Calculator</h4>
-          <p className="calculator-intro">
-            Calculate how long this medication will last based on dosing frequency.
-          </p>
-          
-          <div className="days-supply-inputs">
-            <div className="form-group">
-              <label htmlFor="daysSupplyDoseValue">Dose Amount</label>
-              <input
-                type="number"
-                id="daysSupplyDoseValue"
-                value={currentDoseValue || ''}
-                onChange={(e) => setCurrentDoseValue(e.target.value ? parseFloat(e.target.value) : 0)}
-                step="0.01"
-                min="0"
-                className="form-control"
-              />
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="daysSupplyDoseUnit">Dose Unit</label>
-              <select
-                id="daysSupplyDoseUnit"
-                value={currentDoseUnit}
-                onChange={(e) => setCurrentDoseUnit(e.target.value)}
-                className="form-control"
-              >
-                <option value="">-- Select Unit --</option>
-                {formData.dispenserInfo && (
-                  <option value={formData.dispenserInfo.unit}>{formData.dispenserInfo.unit}</option>
-                )}
-                <option value={formData.ingredient[0]?.strengthRatio.numerator.unit || 'mg'}>
-                  {formData.ingredient[0]?.strengthRatio.numerator.unit || 'mg'}
-                </option>
-                <option value={formData.ingredient[0]?.strengthRatio.denominator.unit || ''}>
-                  {formData.ingredient[0]?.strengthRatio.denominator.unit || ''}
-                </option>
-              </select>
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="daysSupplyFrequency">Frequency</label>
-              <select
-                id="daysSupplyFrequency"
-                value={currentFrequency}
-                onChange={(e) => setCurrentFrequency(e.target.value)}
-                className="form-control"
-              >
-                <option value="">-- Select Frequency --</option>
-                {frequencyOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          
-          {currentDoseValue > 0 && currentDoseUnit && currentFrequency && (
-            <DaysSupplyCalculator
-              medication={formData}
-              doseValue={currentDoseValue}
-              doseUnit={currentDoseUnit}
-              frequency={currentFrequency}
-            />
-          )}
+          <EmbeddedSignatureBuilder
+            medication={formData}
+            defaultSettings={formData.defaultSignatureSettings}
+            onSaveDefaults={(settings) => {
+              setFormData(prev => ({
+                ...prev,
+                defaultSignatureSettings: settings
+              }));
+            }}
+          />
         </div>
       )}
       
@@ -903,19 +845,6 @@ const MedicationForm: React.FC<MedicationFormProps> = ({ medication, isAddMode, 
             border-radius: 4px;
           }
           
-          /* Days Supply Calculator Styles */
-          .calculator-intro {
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-            color: #6c757d;
-          }
-          
-          .days-supply-inputs {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
-          }
           
           /* Dosage Constraints Styles */
           .dosage-constraints-row {
@@ -936,7 +865,7 @@ const MedicationForm: React.FC<MedicationFormProps> = ({ medication, isAddMode, 
           }
 
           @media (max-width: 768px) {
-            .days-supply-inputs, .dosage-constraints-row {
+            .dosage-constraints-row {
               grid-template-columns: 1fr;
               gap: 0.5rem;
             }

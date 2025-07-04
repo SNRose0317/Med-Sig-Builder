@@ -5,11 +5,17 @@ import { getMedications } from '../services/medicationService';
 interface MedicationSelectorProps {
   selectedMedication: Medication | null;
   onSelectMedication: (medication: Medication) => void;
+  onDefaultsLoaded?: (defaults: {
+    dosage: { value: number; unit: string };
+    frequency: string;
+    specialInstructions?: string;
+  }) => void;
 }
 
 const MedicationSelector: React.FC<MedicationSelectorProps> = ({
   selectedMedication,
-  onSelectMedication
+  onSelectMedication,
+  onDefaultsLoaded
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [medications, setMedications] = useState<Medication[]>([]);
@@ -18,25 +24,63 @@ const MedicationSelector: React.FC<MedicationSelectorProps> = ({
   
   // Fetch medications from Supabase on component mount
   useEffect(() => {
+    let mounted = true;
+    
     const fetchMedications = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         const meds = await getMedications();
-        setMedications(meds);
+        
+        // Only update state if component is still mounted
+        if (mounted) {
+          setMedications(meds);
+          setError(null);
+        }
       } catch (err) {
         console.error('Error fetching medications:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load medications');
+        
+        // Only update state if component is still mounted
+        if (mounted) {
+          const errorMessage = err instanceof Error ? err.message : 'Failed to load medications';
+          setError(errorMessage);
+          
+          // If it's a connection error, don't keep retrying
+          if (errorMessage.includes('connect')) {
+            console.log('Connection error detected, not retrying');
+          }
+        }
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
     
     fetchMedications();
+    
+    // Cleanup function to prevent state updates on unmounted components
+    return () => {
+      mounted = false;
+    };
   }, []);
   
+  const [showDefaultsNotification, setShowDefaultsNotification] = useState(false);
+
   const handleSelect = (medication: Medication) => {
     onSelectMedication(medication);
     setIsOpen(false);
+    
+    // Check if medication has default signature settings
+    if (medication.defaultSignatureSettings && onDefaultsLoaded) {
+      onDefaultsLoaded(medication.defaultSignatureSettings);
+      setShowDefaultsNotification(true);
+      
+      // Hide notification after 3 seconds
+      setTimeout(() => {
+        setShowDefaultsNotification(false);
+      }, 3000);
+    }
   };
 
   // Format the strength ratio for display
@@ -133,7 +177,20 @@ const MedicationSelector: React.FC<MedicationSelectorProps> = ({
                 Schedule {selectedMedication.extension[0].schedule}
               </span>
             )}
+            {selectedMedication.defaultSignatureSettings && (
+              <span className="badge bg-info text-dark" title="Has default signature settings">
+                <i className="bi bi-star-fill"></i> Defaults
+              </span>
+            )}
           </div>
+        </div>
+      )}
+      
+      {/* Defaults loaded notification */}
+      {showDefaultsNotification && (
+        <div className="alert alert-info alert-dismissible fade show mt-2" role="alert">
+          <i className="bi bi-check-circle me-2"></i>
+          Default signature settings have been loaded
         </div>
       )}
     </div>

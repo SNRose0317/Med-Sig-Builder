@@ -1,12 +1,13 @@
 import React, { useReducer, useCallback, useState } from 'react';
 import MedicationSelector from './components/MedicationSelector';
 import DoseInput from './components/DoseInput';
-import RouteSelector from './components/RouteSelector';
 import FrequencySelector from './components/FrequencySelector';
 import SpecialInstructions from './components/SpecialInstructions';
 import SignatureOutput from './components/SignatureOutput';
 import MedicationOverviewTable from './components/MedicationOverviewTable';
 import DaysSupplyCalculator from './components/DaysSupplyCalculator';
+import ConnectionStatus from './components/ConnectionStatus';
+import FHIRStructureViewer from './components/FHIRStructureViewer';
 import reducer, { initialState, validateState, AppState } from './reducer';
 import { generateSignature, DoseInput as DoseInputType } from './utils/buildDosage';
 import { Medication } from './types';
@@ -27,11 +28,6 @@ function App() {
     dispatch({ type: 'CLEAR_ERROR', field: 'dosage' });
   }, []);
   
-  // Handler for selecting a route
-  const handleSelectRoute = useCallback((route: string) => {
-    dispatch({ type: 'SELECT_ROUTE', route });
-    dispatch({ type: 'CLEAR_ERROR', field: 'route' });
-  }, []);
   
   // Handler for selecting a frequency
   const handleSelectFrequency = useCallback((frequency: string) => {
@@ -87,8 +83,18 @@ function App() {
     dispatch({ type: 'RESET_FORM' });
   }, []);
   
+  // Handler for loading default settings
+  const handleDefaultsLoaded = useCallback((defaults: {
+    dosage: { value: number; unit: string };
+    frequency: string;
+    specialInstructions?: string;
+  }) => {
+    dispatch({ type: 'LOAD_DEFAULTS', defaults });
+  }, []);
+  
   return (
     <div className="container-fluid bg-white min-vh-100">
+      <ConnectionStatus />
       <div className="app-header py-2 mb-3 border-bottom">
         <div className="container-fluid">
           <div className="d-flex align-items-center">
@@ -134,18 +140,22 @@ function App() {
                     <MedicationSelector
                       selectedMedication={state.selectedMedication}
                       onSelectMedication={handleSelectMedication}
+                      onDefaultsLoaded={handleDefaultsLoaded}
                     />
                   </div>
                   <div className="col-md-6">
                     {state.selectedMedication ? (
                       <>
                         <div className="input-group-label">Route</div>
-                        <RouteSelector
-                          medication={state.selectedMedication}
-                          selectedRoute={state.selectedRoute}
-                          onSelectRoute={handleSelectRoute}
-                          error={state.errors.route}
-                        />
+                        <div className="form-control d-flex align-items-center justify-content-between" style={{backgroundColor: '#e9ecef'}}>
+                          <span>{state.selectedRoute || 'No route configured'}</span>
+                          {state.selectedRoute && routes[state.selectedRoute]?.requiresSpecialInstructions && (
+                            <span className="badge bg-info text-white" style={{fontSize: "0.7rem"}}>
+                              <i className="bi bi-info-circle me-1"></i>
+                              Special instructions recommended
+                            </span>
+                          )}
+                        </div>
                       </>
                     ) : (
                       <div className="input-placeholder">
@@ -243,6 +253,16 @@ function App() {
                 </div>
               </div>
             </div>
+            
+            {/* FHIR Structure Viewer */}
+            <FHIRStructureViewer
+              medication={state.selectedMedication}
+              dosage={state.dosage}
+              route={state.selectedRoute}
+              frequency={state.selectedFrequency}
+              specialInstructions={state.specialInstructions}
+              signature={state.generatedSignature}
+            />
           </form>
         )}
         

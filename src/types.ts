@@ -63,4 +63,12 @@ export interface Medication {
     };
     step?: number;
   };
+  defaultSignatureSettings?: {
+    dosage: {
+      value: number;
+      unit: string;
+    };
+    frequency: string;
+    specialInstructions?: string;
+  };
 }

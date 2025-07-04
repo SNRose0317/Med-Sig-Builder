@@ -1,5 +1,5 @@
 import { Medication } from '../types';
-import frequencies from '../tables/frequencyTable';
+import { getFrequency } from '../tables/frequencyTable';
 
 interface DoseInfo {
   value: number;
@@ -37,23 +37,11 @@ export function calculateDaysSupply(
   });
   
   // Get frequency information - handle case sensitivity by using Object.keys
-  let frequency = frequencies[frequencyKey];
+  const frequency = getFrequency(frequencyKey);
   
-  // If direct lookup fails, try a case-insensitive match
   if (!frequency) {
-    const freqKeys = Object.keys(frequencies);
-    const matchedKey = freqKeys.find(key => 
-      key.toLowerCase() === frequencyKey?.toLowerCase()
-    );
-    
-    if (matchedKey) {
-      frequency = frequencies[matchedKey];
-    } else {
-      console.error(`Frequency not found for key: "${frequencyKey}"`, {
-        availableKeys: Object.keys(frequencies)
-      });
-      return null;
-    }
+    console.error(`Frequency not found for key: "${frequencyKey}"`);
+    return null;
   }
 
   // Calculate doses per day

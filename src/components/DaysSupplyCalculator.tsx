@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Medication } from '../types';
 import calculateDaysSupply from '../utils/calculateDaysSupply';
-import frequencies from '../tables/frequencyTable';
+import { getFrequency } from '../tables/frequencyTable';
 
 interface DaysSupplyCalculatorProps {
   medication: Medication;
@@ -79,7 +79,7 @@ const DaysSupplyCalculator: React.FC<DaysSupplyCalculatorProps> = ({
   }
 
   const packageInfo = medication.packageInfo;
-  const freqData = frequencies[frequency];
+  const freqData = getFrequency(frequency);
   
   // For debugging - log the parameters
   console.log('Days Supply Calculator Parameters:', {
@@ -88,7 +88,6 @@ const DaysSupplyCalculator: React.FC<DaysSupplyCalculatorProps> = ({
     doseUnit,
     frequency,
     freqData,
-    frequencies: Object.keys(frequencies),
     packageInfo
   });
   
@@ -112,6 +111,7 @@ const DaysSupplyCalculator: React.FC<DaysSupplyCalculatorProps> = ({
         <div className="result">
           <p><strong>Days Supply:</strong> {daysSupply} days</p>
           <button 
+            type="button"
             className="details-toggle" 
             onClick={() => setShowDetails(!showDetails)}
           >

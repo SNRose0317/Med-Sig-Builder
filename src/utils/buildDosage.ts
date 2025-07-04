@@ -1,7 +1,7 @@
 import { Medication } from '../types';
 import doseForms from '../tables/doseForms';
 import routes from '../tables/routes';
-import frequencies from '../tables/frequencyTable';
+import frequencies, { getFrequency } from '../tables/frequencyTable';
 import { getVerb } from '../tables/verbs';
 
 export interface DoseInput {
@@ -296,7 +296,7 @@ export function createFhirRepresentation(
         doseQuantity: doseQuantity
       },
       timing: {
-        repeat: frequencies[frequency]?.fhirMapping || {}
+        repeat: getFrequency(frequency)?.fhirMapping || {}
       }
     }
   };
@@ -464,7 +464,7 @@ export function generateSignature(
   }
   
   // Get human-readable frequency
-  const frequencyInfo = frequencies[frequencyName];
+  const frequencyInfo = getFrequency(frequencyName);
   if (!frequencyInfo) {
     throw new Error('Invalid frequency specified');
   }

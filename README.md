@@ -10,6 +10,8 @@ A web application for creating standardized medication signatures (instructions)
 - Automatic conversion between different units (mg, mL, tablets, etc.)
 - Generate human-readable instructions that follow best practices
 - Manage medications in a database
+- **NEW: Default Signature Settings** - Save preferred prescription settings for each medication
+- **NEW: Bi-directional Dosage Input** - Enter values in either unit with real-time conversion
 
 ## Getting Started
 
@@ -100,12 +102,25 @@ If you're still having issues connecting to Supabase:
 2. Verify there are no restrictions on your API keys
 3. Check if your database migrations ran successfully
 
+## New Features
+
+### Default Signature Settings
+Save time by storing preferred prescription settings for each medication. When you select a medication with saved defaults, the dosage, route, frequency, and special instructions automatically populate. [Learn more](docs/DEFAULT_SIGNATURE_SETTINGS.md)
+
+### Bi-directional Dosage Input
+Enter dosage values in either unit (e.g., mg or mL) and see real-time conversion in the companion field. This feature works with:
+- Injectable solutions (mg ↔ mL)
+- Tablets/Capsules (tablets ↔ mg)
+- Creams with dispensers (clicks ↔ mL ↔ mg)
+- And more!
+
 ## Development Documentation
 
 For detailed information about the application architecture and design, see:
 
 - [Architecture Documentation](docs/Architecture.md)
 - [Topiclick Dispenser Integration](docs/TopiclickDispenser.md)
+- [Default Signature Settings](docs/DEFAULT_SIGNATURE_SETTINGS.md)
 - [Main Documentation](DOCUMENTATION.md)
 
 ## License

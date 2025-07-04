@@ -210,6 +210,19 @@ export const frequencies: Record<string, Frequency> = {
   }
 };
 
+// Create a case-insensitive lookup map
+export const frequencyLookup = new Map<string, string>();
+Object.keys(frequencies).forEach(key => {
+  frequencyLookup.set(key.toLowerCase(), key);
+});
+
+// Helper function to get frequency by any case
+export const getFrequency = (value: string): Frequency | undefined => {
+  if (!value) return undefined;
+  const normalizedKey = frequencyLookup.get(value.toLowerCase());
+  return normalizedKey ? frequencies[normalizedKey] : undefined;
+};
+
 export const frequencyOptions = Object.keys(frequencies).map(key => ({
   value: key,
   label: key

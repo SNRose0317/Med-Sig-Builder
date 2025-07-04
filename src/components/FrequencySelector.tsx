@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import frequencies, { frequencyOptions } from '../tables/frequencyTable';
+import frequencies, { frequencyOptions, getFrequency, frequencyLookup } from '../tables/frequencyTable';
 
 interface FrequencySelectorProps {
   selectedFrequency: string;
@@ -17,17 +17,24 @@ const FrequencySelector: React.FC<FrequencySelectorProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   
   const handleSelectFrequency = (frequencyValue: string) => {
-    onSelectFrequency(frequencyValue);
-    setIsOpen(false);
+    console.log('FrequencySelector: Selecting frequency:', frequencyValue);
+    try {
+      onSelectFrequency(frequencyValue);
+      setIsOpen(false);
+    } catch (error) {
+      console.error('FrequencySelector: Error selecting frequency:', error);
+      throw error;
+    }
   };
 
   // Group frequencies by period unit for the dropdown
-  const dailyFrequencies = frequencyOptions.filter(f => frequencies[f.value].periodUnit === 'd');
-  const weeklyFrequencies = frequencyOptions.filter(f => frequencies[f.value].periodUnit === 'wk');
-  const monthlyFrequencies = frequencyOptions.filter(f => frequencies[f.value].periodUnit === 'mo');
+  const dailyFrequencies = frequencyOptions.filter(f => frequencies[f.value]?.periodUnit === 'd');
+  const weeklyFrequencies = frequencyOptions.filter(f => frequencies[f.value]?.periodUnit === 'wk');
+  const monthlyFrequencies = frequencyOptions.filter(f => frequencies[f.value]?.periodUnit === 'mo');
 
-  // Find the currently selected frequency label
-  const selectedFrequencyLabel = frequencyOptions.find(f => f.value === selectedFrequency)?.label || 'Select frequency';
+  // Find the currently selected frequency label (case-insensitive)
+  const normalizedSelectedKey = selectedFrequency ? frequencyLookup.get(selectedFrequency.toLowerCase()) : null;
+  const selectedFrequencyLabel = normalizedSelectedKey || 'Select frequency';
 
   return (
     <div className="frequency-selector">

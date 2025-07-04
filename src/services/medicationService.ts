@@ -3,29 +3,41 @@ import { Medication } from '../types'
 import { objectToDatabaseFormat, objectToApplicationFormat } from './dbAdapter'
 import { flattenDosageConstraints, reconstructDosageConstraints } from './dbAdapter.ext'
 import { v4 as uuidv4 } from 'uuid'
+import { medicationCache } from './medicationCache'
 
 /**
- * Fetch all medications from the database
+ * Fetch all medications from the database with caching
  */
 export const getMedications = async (): Promise<Medication[]> => {
-  const { data, error } = await supabase
-    .from('medications')
-    .select('*')
-  
-  if (error) {
-    console.error('Error fetching medications:', error)
-    throw new Error(`Database error: ${error.message}`)
-  }
-  
-  if (!data) {
-    throw new Error('No data returned from the database')
-  }
-  
-  // Convert from snake_case database columns to camelCase properties and reconstruct nested objects
-  return data.map(item => {
-    let resultObj = objectToApplicationFormat(item);
-    resultObj = reconstructDosageConstraints(resultObj);
-    return resultObj as Medication;
+  // Use cache to prevent duplicate requests
+  return medicationCache.getMedications(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('medications')
+        .select('*')
+      
+      if (error) {
+        console.error('Error fetching medications:', error)
+        throw new Error(`Database error: ${error.message}`)
+      }
+      
+      if (!data) {
+        throw new Error('No data returned from the database')
+      }
+      
+      // Convert from snake_case database columns to camelCase properties and reconstruct nested objects
+      return data.map(item => {
+        let resultObj = objectToApplicationFormat(item);
+        resultObj = reconstructDosageConstraints(resultObj);
+        return resultObj as Medication;
+      });
+    } catch (error: any) {
+      // Handle specific connection errors
+      if (error.message?.includes('ERR_CONNECTION_REFUSED') || error.code === 'ECONNREFUSED') {
+        throw new Error('Cannot connect to the database server. Please ensure the server is running.');
+      }
+      throw error;
+    }
   });
 }
 
@@ -79,6 +91,9 @@ export const saveMedication = async (medication: Medication): Promise<Medication
   // Reconstruct nested dosage constraints
   resultObj = reconstructDosageConstraints(resultObj);
   
+  // Update the cache with the saved medication
+  medicationCache.updateMedication(resultObj as Medication);
+  
   return resultObj as Medication;
 }
 
@@ -99,6 +114,9 @@ export const deleteMedication = async (id: string): Promise<void> => {
     console.error('Error deleting medication:', error)
     throw new Error(`Database error while deleting medication: ${error.message}`)
   }
+  
+  // Remove from cache
+  medicationCache.removeMedication(id);
 }
 
 /**

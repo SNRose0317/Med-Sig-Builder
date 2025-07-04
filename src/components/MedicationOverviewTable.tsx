@@ -15,44 +15,74 @@ const MedicationOverviewTable: React.FC = () => {
 
   // Load medications from Supabase on component mount
   useEffect(() => {
+    let mounted = true;
+    let initializationAttempted = false;
+    
     const fetchMedications = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         const meds = await getMedications();
         
+        if (!mounted) return;
+        
         // If no medications exist in the database, initialize with default data
-        if (meds.length === 0 && !isInitializing) {
+        if (meds.length === 0 && !isInitializing && !initializationAttempted) {
+          initializationAttempted = true;
           setIsInitializing(true);
           try {
             await initializeMedicationsDatabase(defaultMedications as Medication[]);
             const initializedMeds = await getMedications();
-            setMedicationsList(initializedMeds);
+            
+            if (mounted) {
+              setMedicationsList(initializedMeds);
+            }
           } catch (initError) {
             console.error('Error initializing medications:', initError);
-            const errorMessage = initError instanceof Error 
-              ? `Database initialization error: ${initError.message}`
-              : 'Unknown error initializing medications database';
-            setError(errorMessage);
-            setMedicationsList([]);
+            
+            if (mounted) {
+              const errorMessage = initError instanceof Error 
+                ? `Database initialization error: ${initError.message}`
+                : 'Unknown error initializing medications database';
+              setError(errorMessage);
+              setMedicationsList([]);
+            }
           } finally {
-            setIsInitializing(false);
+            if (mounted) {
+              setIsInitializing(false);
+            }
           }
         } else {
           setMedicationsList(meds);
         }
       } catch (err) {
         console.error('Error fetching medications:', err);
-        const errorMessage = err instanceof Error 
-          ? `Database connection error: ${err.message}`
-          : 'Failed to connect to the database';
-        setError(errorMessage);
-        setMedicationsList([]);
+        
+        if (mounted) {
+          const errorMessage = err instanceof Error 
+            ? err.message
+            : 'Failed to connect to the database';
+          setError(errorMessage);
+          setMedicationsList([]);
+          
+          // If it's a connection error, don't keep retrying
+          if (errorMessage.includes('connect')) {
+            console.log('Connection error detected, not retrying');
+          }
+        }
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
     
     fetchMedications();
+    
+    // Cleanup function
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handleAddNewClick = () => {

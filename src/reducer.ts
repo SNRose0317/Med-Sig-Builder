@@ -46,20 +46,22 @@ export const initialState: AppState = {
 export type Action =
   | { type: 'SELECT_MEDICATION'; medication: Medication }
   | { type: 'UPDATE_DOSAGE'; dosage: DoseInput }
-  | { type: 'SELECT_ROUTE'; route: string }
   | { type: 'SELECT_FREQUENCY'; frequency: string }
   | { type: 'UPDATE_SPECIAL_INSTRUCTIONS'; instructions: string }
   | { type: 'GENERATE_SIGNATURE'; signature: { humanReadable: string; fhirRepresentation: any } }
   | { type: 'SET_ERROR'; field: string; message: string }
   | { type: 'CLEAR_ERROR'; field: string }
-  | { type: 'RESET_FORM' };
+  | { type: 'RESET_FORM' }
+  | { type: 'LOAD_DEFAULTS'; defaults: { dosage: DoseInput; frequency: string; specialInstructions?: string } };
 
 export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'SELECT_MEDICATION':
       // When selecting a medication, update route and reset dosage with appropriate unit
       const medication = action.medication;
-      const defaultRoute = medication.defaultRoute || '';
+      // Use defaultRoute, or fallback to first allowed route if not set
+      const defaultRoute = medication.defaultRoute || 
+        (medication.allowedRoutes && medication.allowedRoutes.length > 0 ? medication.allowedRoutes[0] : '');
       
       // Set appropriate default unit based on dosage form
       let defaultUnit = 'mg';
@@ -95,12 +97,6 @@ export function reducer(state: AppState, action: Action): AppState {
         generatedSignature: null // Reset signature when dosage changes
       };
       
-    case 'SELECT_ROUTE':
-      return {
-        ...state,
-        selectedRoute: action.route,
-        generatedSignature: null // Reset signature when route changes
-      };
       
     case 'SELECT_FREQUENCY':
       return {
@@ -141,6 +137,16 @@ export function reducer(state: AppState, action: Action): AppState {
       
     case 'RESET_FORM':
       return initialState;
+      
+    case 'LOAD_DEFAULTS':
+      return {
+        ...state,
+        dosage: action.defaults.dosage,
+        selectedFrequency: action.defaults.frequency,
+        specialInstructions: action.defaults.specialInstructions || '',
+        generatedSignature: null,
+        errors: {}
+      };
       
     default:
       return state;
