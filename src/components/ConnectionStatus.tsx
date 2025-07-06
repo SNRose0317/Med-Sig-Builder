@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { WifiOff, X } from 'lucide-react';
 
 const ConnectionStatus: React.FC = () => {
   const [isConnected, setIsConnected] = useState(true);
@@ -29,40 +30,25 @@ const ConnectionStatus: React.FC = () => {
   }
 
   return (
-    <div className="connection-status-banner">
-      <div className="container-fluid">
-        <div className="d-flex align-items-center justify-content-between">
-          <div className="d-flex align-items-center">
-            <i className="bi bi-wifi-off me-2"></i>
+    <div className="fixed top-0 left-0 right-0 bg-red-600 text-white py-2 px-4 z-50 shadow-lg">
+      <div className="container mx-auto">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <WifiOff className="h-5 w-5" />
             <span>
               Connection issue detected. Some features may be unavailable.
             </span>
           </div>
           <button
             type="button"
-            className="btn-close btn-close-white"
+            className="p-1 hover:bg-red-700 rounded transition-colors"
             aria-label="Close"
             onClick={() => setShowBanner(false)}
-          ></button>
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
       </div>
-      
-      <style>{`
-        .connection-status-banner {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          background-color: #dc3545;
-          color: white;
-          padding: 0.5rem 0;
-          z-index: 1050;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .connection-status-banner .btn-close-white {
-          filter: invert(1);
-        }
-      `}</style>
     </div>
   );
 };

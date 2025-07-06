@@ -73,6 +73,11 @@ export interface Medication {
   
   // Gender eligibility (REQUIRED for gender-specific medications)
   eligibleGenders?: Array<'MALE' | 'FEMALE' | 'OTHER'>;
+  
+  // Vendor information
+  vendor?: string;
+  sku?: string;
+  position?: number;
 }
 
 // Simplified dose type

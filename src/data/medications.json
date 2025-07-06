@@ -1,102 +1,55 @@
 [
   {
-    "id": "med-128",
-    "name": "Testosterone 100mg/mL Cream",
+    "id": "1",
+    "name": "Progesterone 200mg Sublingual Tablet",
     "type": "medication",
     "isActive": true,
     "code": {
       "coding": [
-        { "display": "Testosterone 100mg/mL Cream" }
+        { "display": "Progesterone 200mg Sublingual Tablet" }
       ]
     },
-    "doseForm": "Cream",
+    "doseForm": "Tablet",
     "extension": [],
-    "packageInfo": {
-      "quantity": 30,
-      "unit": "mL",
-      "packSize": 1,
-      "totalVolume": {
-        "value": 30,
-        "unit": "mL"
-      }
-    },
-    "dispenserInfo": {
-      "type": "Topiclick",
-      "unit": "click",
-      "pluralUnit": "clicks",
-      "conversionRatio": 4
-    },
     "ingredient": [
       {
-        "name": "Testosterone",
+        "name": "Progesterone",
         "strengthRatio": {
           "numerator": {
-            "value": 100,
+            "value": 200,
             "unit": "mg"
           },
           "denominator": {
             "value": 1,
-            "unit": "mL"
+            "unit": "tablet"
           }
         }
       }
     ],
-    "allowedRoutes": ["Topically"],
-    "defaultRoute": "Topically",
-    "commonDosages": [
-      {
-        "value": 2,
-        "unit": "click",
-        "frequency": "twice_daily"
-      },
-      {
-        "value": 4,
-        "unit": "click",
-        "frequency": "once_daily"
-      }
-    ],
-    "dosageConstraints": {
-      "minDose": {
-        "value": 1,
-        "unit": "click"
-      },
-      "maxDose": {
-        "value": 8,
-        "unit": "click"
-      }
-    }
+    "allowedRoutes": ["Sublingually"],
+    "defaultRoute": "Sublingually",
+    "vendor": "Anazo Pharmacy",
+    "sku": "ANA-76",
+    "position": 1200
   },
   {
-    "id": "med-123",
-    "name": "Testosterone Cypionate",
+    "id": "2",
+    "name": "L-Carnitine 500mg/mL x 30mL Vial",
     "type": "medication",
-    "isActive": true,
+    "isActive": false,
     "code": {
       "coding": [
-        { "display": "Testosterone Cypionate" }
+        { "display": "L-Carnitine 500mg/mL x 30mL Vial" }
       ]
     },
     "doseForm": "Vial",
-    "totalVolume": {
-      "value": 5,
-      "unit": "mL"
-    },
-    "packageInfo": {
-      "quantity": 5,
-      "unit": "mL"
-    },
-    "extension": [
-      {
-        "us-controlled": true,
-        "schedule": "III"
-      }
-    ],
+    "extension": [],
     "ingredient": [
       {
-        "name": "Testosterone Cypionate",
+        "name": "L-Carnitine",
         "strengthRatio": {
           "numerator": {
-            "value": 200,
+            "value": 500,
             "unit": "mg"
           },
           "denominator": {
@@ -108,51 +61,28 @@
     ],
     "allowedRoutes": ["Intramuscularly"],
     "defaultRoute": "Intramuscularly",
-    "commonDosages": [
-      {
-        "value": 100,
-        "unit": "mg",
-        "frequency": "once_per_week"
-      },
-      {
-        "value": 200,
-        "unit": "mg",
-        "frequency": "once_per_two_weeks"
-      }
-    ],
-    "dosageConstraints": {
-      "minDose": {
-        "value": 50,
-        "unit": "mg"
-      },
-      "maxDose": {
-        "value": 400,
-        "unit": "mg"
-      }
-    }
+    "vendor": "",
+    "sku": "",
+    "position": 1197
   },
   {
-    "id": "med-124",
-    "name": "Amoxicillin",
+    "id": "3",
+    "name": "Progesterone 125mg Capsule (E4M)",
     "type": "medication",
     "isActive": true,
     "code": {
       "coding": [
-        { "display": "Amoxicillin" }
+        { "display": "Progesterone 125mg Capsule (E4M)" }
       ]
     },
     "doseForm": "Capsule",
     "extension": [],
-    "packageInfo": {
-      "quantity": 30,
-      "unit": "capsules"
-    },
     "ingredient": [
       {
-        "name": "Amoxicillin",
+        "name": "Progesterone",
         "strengthRatio": {
           "numerator": {
-            "value": 500,
+            "value": 125,
             "unit": "mg"
           },
           "denominator": {
@@ -164,177 +94,8 @@
     ],
     "allowedRoutes": ["Orally"],
     "defaultRoute": "Orally",
-    "commonDosages": [
-      {
-        "value": 500,
-        "unit": "mg",
-        "frequency": "three_times_daily"
-      },
-      {
-        "value": 875,
-        "unit": "mg",
-        "frequency": "twice_daily"
-      }
-    ],
-    "dosageConstraints": {
-      "minDose": {
-        "value": 250,
-        "unit": "mg"
-      },
-      "maxDose": {
-        "value": 1000,
-        "unit": "mg"
-      }
-    }
-  },
-  {
-    "id": "med-125",
-    "name": "Prednisone",
-    "type": "medication",
-    "isActive": true,
-    "code": {
-      "coding": [
-        { "display": "Prednisone" }
-      ]
-    },
-    "doseForm": "Tablet",
-    "extension": [],
-    "packageInfo": {
-      "quantity": 20,
-      "unit": "tablets"
-    },
-    "ingredient": [
-      {
-        "name": "Prednisone",
-        "strengthRatio": {
-          "numerator": {
-            "value": 20,
-            "unit": "mg"
-          },
-          "denominator": {
-            "value": 1,
-            "unit": "tablet"
-          }
-        }
-      }
-    ],
-    "allowedRoutes": ["Orally"],
-    "defaultRoute": "Orally",
-    "commonDosages": [
-      {
-        "value": 20,
-        "unit": "mg",
-        "frequency": "once_daily"
-      }
-    ],
-    "dosageConstraints": {
-      "minDose": {
-        "value": 5,
-        "unit": "mg"
-      },
-      "maxDose": {
-        "value": 60,
-        "unit": "mg"
-      }
-    }
-  },
-  {
-    "id": "med-126",
-    "name": "Fluticasone Propionate",
-    "type": "medication",
-    "isActive": true,
-    "code": {
-      "coding": [
-        { "display": "Fluticasone Propionate" }
-      ]
-    },
-    "doseForm": "Nasal Spray",
-    "extension": [],
-    "packageInfo": {
-      "quantity": 120,
-      "unit": "sprays",
-      "packSize": 1
-    },
-    "ingredient": [
-      {
-        "name": "Fluticasone Propionate",
-        "strengthRatio": {
-          "numerator": {
-            "value": 50,
-            "unit": "mcg"
-          },
-          "denominator": {
-            "value": 1,
-            "unit": "spray"
-          }
-        }
-      }
-    ],
-    "allowedRoutes": ["Intranasal"],
-    "defaultRoute": "Intranasal",
-    "commonDosages": [
-      {
-        "value": 2,
-        "unit": "spray",
-        "frequency": "twice_daily"
-      }
-    ],
-    "dosageConstraints": {
-      "minDose": {
-        "value": 1,
-        "unit": "spray"
-      },
-      "maxDose": {
-        "value": 2,
-        "unit": "spray"
-      }
-    }
-  },
-  {
-    "id": "med-127",
-    "name": "Clobetasol Propionate",
-    "type": "medication",
-    "isActive": true,
-    "code": {
-      "coding": [
-        { "display": "Clobetasol Propionate" }
-      ]
-    },
-    "doseForm": "Cream",
-    "extension": [],
-    "ingredient": [
-      {
-        "name": "Clobetasol Propionate",
-        "strengthRatio": {
-          "numerator": {
-            "value": 0.05,
-            "unit": "%"
-          },
-          "denominator": {
-            "value": 1,
-            "unit": "application"
-          }
-        }
-      }
-    ],
-    "allowedRoutes": ["Topically"],
-    "defaultRoute": "Topically",
-    "commonDosages": [
-      {
-        "value": 1,
-        "unit": "application",
-        "frequency": "twice_daily"
-      }
-    ],
-    "dosageConstraints": {
-      "minDose": {
-        "value": 1,
-        "unit": "application"
-      },
-      "maxDose": {
-        "value": 1,
-        "unit": "application"
-      }
-    }
+    "vendor": "Strive Pharmacy",
+    "sku": "STR-116",
+    "position": 1196
   }
 ]

@@ -11,7 +11,6 @@ import {
 } from '../lib/signature';
 import { calculateDaysSupply, getDoseConstraintMessage } from '../lib/calculations';
 import { medicationsAPI } from '../api/medications';
-import RouteSelector from './RouteSelector';
 import FHIRStructureViewer from './FHIRStructureViewer';
 import { 
   routes, 
@@ -22,6 +21,32 @@ import {
   getFrequency,
   getVerb 
 } from '../constants/medication-data';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Badge } from './ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
+import { 
+  ChevronDown, 
+  ChevronUp, 
+  Layers, 
+  AlertTriangle, 
+  Info,
+  Eye,
+  EyeOff,
+  Calculator,
+  Plus,
+  X,
+  Package
+} from 'lucide-react';
+import { FormSection, FormField } from './ui/form-components';
 
 interface SignatureBuilderProps {
   selectedMedication: Medication | null;
@@ -56,8 +81,6 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({
 }) => {
   // Local state for UI
   const [medicationsDropdownOpen, setMedicationsDropdownOpen] = useState(false);
-  const [frequencyDropdownOpen, setFrequencyDropdownOpen] = useState(false);
-  const [routeDropdownOpen, setRouteDropdownOpen] = useState(false);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [isLoadingMedications, setIsLoadingMedications] = useState(true);
   const [medicationsError, setMedicationsError] = useState<string | null>(null);
@@ -107,202 +130,111 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({
     };
   }, []);
 
-  // Determine if medication supports dual input
+  // Auto-select route from medication
   useEffect(() => {
-    if (!selectedMedication) {
-      setShowDualInput(false);
-      return;
+    if (selectedMedication?.defaultRoute && route !== selectedMedication.defaultRoute) {
+      onRouteChange(selectedMedication.defaultRoute);
+    }
+  }, [selectedMedication, route, onRouteChange]);
+
+  // Initialize dose inputs when medication selected
+  useEffect(() => {
+    if (selectedMedication) {
+      const multiIngredient = isMultiIngredient(selectedMedication);
+      const strengthMode = getStrengthMode(selectedMedication.doseForm);
+      const denominatorUnit = getDenominatorUnit(selectedMedication.doseForm);
+      
+      // Setup default units
+      if (multiIngredient && strengthMode === 'ratio') {
+        setPrimaryUnit(denominatorUnit);
+        setShowDualInput(false);
+      } else if (selectedMedication.ingredient?.[0]?.strengthRatio) {
+        const { numerator } = selectedMedication.ingredient[0].strengthRatio;
+        setPrimaryUnit(numerator.unit);
+        
+        // Show dual input for ratio mode
+        if (strengthMode === 'ratio') {
+          setSecondaryUnit(denominatorUnit);
+          setShowDualInput(true);
+        } else {
+          setShowDualInput(false);
+        }
+      }
+      
+      // Set default dose if available
+      // TODO: Add defaultDose to dosageConstraints if needed
+    }
+  }, [selectedMedication]);
+
+  // Convert dual input values to dosage
+  const handleDoseInputChange = (value: string, unit: string, isPrimary: boolean) => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
     }
 
-    const strengthRatio = selectedMedication.ingredient?.[0]?.strengthRatio;
-    const doseForm = selectedMedication.doseForm;
-    const multiIngredient = isMultiIngredient(selectedMedication);
-    const strengthMode = getStrengthMode(doseForm);
-    const denominatorUnit = getDenominatorUnit(doseForm);
-    
-    // Multi-ingredient medications in ratio mode only show volume/weight input
-    if (multiIngredient && strengthMode === 'ratio') {
-      setShowDualInput(false);
-      // Set default unit to denominator unit (mL for liquids, g for creams)
-      onDosageChange({ ...dosage, unit: denominatorUnit });
-      return;
-    }
-    
-    // Single-ingredient medications can have dual input based on strength mode
-    if (!multiIngredient && strengthRatio) {
-      if (strengthMode === 'ratio') {
-        // Ratio mode: show both active ingredient and volume/weight
-        setShowDualInput(true);
-        setPrimaryUnit(strengthRatio.numerator.unit);
-        setSecondaryUnit(denominatorUnit);
-        
-        // Special case for Topiclick dispenser
-        if (doseForm === 'Cream' && selectedMedication.dispenserInfo) {
-          setSecondaryUnit(selectedMedication.dispenserInfo.unit);
-        }
-      } else {
-        // Quantity mode: show both active ingredient and dose form count
-        setShowDualInput(true);
-        setPrimaryUnit(strengthRatio.numerator.unit);
-        setSecondaryUnit(doseForm.toLowerCase());
+    // Update local state immediately for responsive UI
+    if (isPrimary) {
+      setPrimaryDoseValue(value);
+      if (!showDualInput || unit !== primaryUnit) {
+        setPrimaryUnit(unit);
       }
     } else {
-      setShowDualInput(false);
+      setSecondaryDoseValue(value);
     }
-  }, [selectedMedication]);
 
-  // Update dose values when dosage changes
-  useEffect(() => {
-    if (!selectedMedication || !showDualInput) return;
-
-    const strengthRatio = selectedMedication.ingredient?.[0]?.strengthRatio;
-    if (!strengthRatio) return;
-
-    if (dosage.unit === primaryUnit) {
-      setPrimaryDoseValue(dosage.value.toString());
-      const converted = calculateConversion(dosage.value, primaryUnit, secondaryUnit);
-      setSecondaryDoseValue(converted !== null ? converted.toString() : '');
-    } else if (dosage.unit === secondaryUnit) {
-      setSecondaryDoseValue(dosage.value.toString());
-      const converted = calculateConversion(dosage.value, secondaryUnit, primaryUnit);
-      setPrimaryDoseValue(converted !== null ? converted.toString() : '');
-    }
-  }, [dosage, selectedMedication, primaryUnit, secondaryUnit, showDualInput]);
-
-  // Calculate conversion between units
-  const calculateConversion = useCallback((value: number, fromUnit: string, toUnit: string): number | null => {
-    if (!selectedMedication?.ingredient?.[0]?.strengthRatio) return null;
-
-    const strengthRatio = selectedMedication.ingredient[0].strengthRatio;
-    const strengthValue = strengthRatio.numerator.value / strengthRatio.denominator.value;
-
-    if (fromUnit === strengthRatio.numerator.unit && toUnit === strengthRatio.denominator.unit) {
-      return Number((value / strengthValue).toFixed(2));
-    }
-    else if (fromUnit === strengthRatio.denominator.unit && toUnit === strengthRatio.numerator.unit) {
-      return Number((value * strengthValue).toFixed(0));
-    }
-    else if (fromUnit === strengthRatio.numerator.unit && toUnit === selectedMedication.doseForm.toLowerCase()) {
-      return Number((value / strengthRatio.numerator.value).toFixed(2));
-    }
-    else if (fromUnit === selectedMedication.doseForm.toLowerCase() && toUnit === strengthRatio.numerator.unit) {
-      return Number((value * strengthRatio.numerator.value).toFixed(0));
-    }
-    else if (selectedMedication.dispenserInfo) {
-      const conversionRatio = selectedMedication.dispenserInfo.conversionRatio;
+    // Debounce the actual dosage update
+    const timer = setTimeout(() => {
+      const parsedValue = parseFloat(value || '0');
       
-      if (fromUnit === selectedMedication.dispenserInfo.unit && toUnit === strengthRatio.numerator.unit) {
-        const mlValue = value / conversionRatio;
-        return Number((mlValue * strengthValue).toFixed(0));
+      if (showDualInput && primaryDoseValue && secondaryDoseValue) {
+        // Dual input mode
+        const primaryParsed = isPrimary ? parsedValue : parseFloat(primaryDoseValue);
+        const secondaryParsed = !isPrimary ? parsedValue : parseFloat(secondaryDoseValue);
+        
+        onDosageChange({
+          value: primaryParsed,
+          unit: primaryUnit
+        });
+      } else {
+        // Single input mode
+        onDosageChange({
+          value: parsedValue,
+          unit: unit || primaryUnit
+        });
       }
-      else if (fromUnit === strengthRatio.numerator.unit && toUnit === selectedMedication.dispenserInfo.unit) {
-        const mlValue = value / strengthValue;
-        return Math.round(mlValue * conversionRatio);
+    }, 300);
+
+    setDebounceTimer(timer);
+  };
+
+  // Validate dose on change
+  useEffect(() => {
+    if (selectedMedication && dosage.value > 0) {
+      const validationResult = validateDose(selectedMedication, dosage);
+      if (!validationResult.valid) {
+        onErrorsChange({ ...errors, dose: validationResult.message || '' });
+      } else {
+        const { dose, ...otherErrors } = errors;
+        onErrorsChange(otherErrors);
       }
     }
+  }, [dosage, selectedMedication]);
 
-    return null;
-  }, [selectedMedication]);
-
-  // Medication selection
+  // Handle medication selection
   const handleSelectMedication = (medication: Medication) => {
     onMedicationSelect(medication);
     setMedicationsDropdownOpen(false);
     
-    // Load defaults if available
-    if (medication.defaultSignatureSettings) {
-      // Load defaults
-      if (medication.defaultSignatureSettings) {
-        onDosageChange(medication.defaultSignatureSettings.dosage);
-        onFrequencyChange(medication.defaultSignatureSettings.frequency);
-        if (medication.defaultSignatureSettings.specialInstructions) {
-          onSpecialInstructionsChange(medication.defaultSignatureSettings.specialInstructions);
-        }
-      }
+    // Show notification about defaults
+    if (medication.defaultRoute) {
       setShowDefaultsNotification(true);
       setTimeout(() => setShowDefaultsNotification(false), 3000);
     }
   };
 
-  // Dose input handlers
-  const handlePrimaryDoseChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setPrimaryDoseValue(value);
-
-    if (debounceTimer) clearTimeout(debounceTimer);
-
-    const timer = setTimeout(() => {
-      const numValue = parseFloat(value);
-      if (!isNaN(numValue) && numValue >= 0) {
-        onDosageChange({ value: numValue, unit: primaryUnit });
-        
-        const converted = calculateConversion(numValue, primaryUnit, secondaryUnit);
-        if (converted !== null) {
-          setSecondaryDoseValue(converted.toString());
-        }
-      }
-    }, 300);
-
-    setDebounceTimer(timer);
-  };
-
-  const handleSecondaryDoseChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSecondaryDoseValue(value);
-
-    if (debounceTimer) clearTimeout(debounceTimer);
-
-    const timer = setTimeout(() => {
-      const numValue = parseFloat(value);
-      if (!isNaN(numValue) && numValue >= 0) {
-        const converted = calculateConversion(numValue, secondaryUnit, primaryUnit);
-        if (converted !== null) {
-          setPrimaryDoseValue(converted.toString());
-          onDosageChange({ value: converted, unit: primaryUnit });
-        }
-      }
-    }, 300);
-
-    setDebounceTimer(timer);
-  };
-
-  const handleSingleDoseChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value);
-    const numValue = isNaN(value) ? 0 : value;
-    onDosageChange({ ...dosage, value: numValue });
-  };
-
-  const handleDoseUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onDosageChange({ ...dosage, unit: e.target.value });
-  };
-
-  // Route selection
-  const handleSelectRoute = (route: string) => {
-    onRouteChange(route);
-    setRouteDropdownOpen(false);
-  };
-
-  // Frequency selection
-  const handleSelectFrequency = (frequency: string) => {
-    onFrequencyChange(frequency);
-    setFrequencyDropdownOpen(false);
-  };
-
-  // Special instructions
-  const handleSpecialInstructionsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onSpecialInstructionsChange(e.target.value);
-  };
-
-  // Get available routes for selected medication
-  const getAvailableRoutes = () => {
-    if (!selectedMedication) return [];
-    
-    const doseForm = doseForms[selectedMedication.doseForm];
-    if (!doseForm) return routeOptions;
-
-    return routeOptions.filter(route => 
-      routes[route.value].applicableForms.includes(selectedMedication!.doseForm)
-    );
+  // Update dosage when unit changes
+  const handleUnitChange = (unit: string) => {
+    handleDoseInputChange(primaryDoseValue, unit, true);
   };
 
   // Get unit options for single dose input
@@ -405,7 +337,6 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({
     return constraints.length > 0 ? constraints : null;
   };
 
-  const availableRoutes = getAvailableRoutes();
   const unitOptions = getUnitOptions();
   const routeInfo = route ? routes[route] : null;
   const suggestSpecialInstructions = routeInfo?.requiresSpecialInstructions || false;
@@ -417,407 +348,285 @@ const SignatureBuilder: React.FC<SignatureBuilderProps> = ({
   const monthlyFrequencies = frequencyOptions.filter(f => frequencies[f.value]?.periodUnit === 'mo');
 
   return (
-    <div className="signature-builder">
-      <h3>Medication Signature Builder</h3>
+    <div className="space-y-6">
+      <h3 className="text-xl font-bold text-foreground">Medication Signature Builder</h3>
       
       {/* Medication Selector - only show if no medication is selected */}
       {!selectedMedication && (
-        <div className="form-group mb-3">
-          <label className="form-label">Medication</label>
-          <div className="dropdown">
+        <FormField label="Medication">
+          <div className="relative">
             <button 
-              className="form-select d-flex justify-content-between align-items-center"
+              className="w-full flex items-center justify-between gap-2 p-3 text-left bg-accent border border-border rounded-lg text-secondary-foreground hover:border-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               type="button"
               onClick={() => setMedicationsDropdownOpen(!medicationsDropdownOpen)}
               aria-expanded={medicationsDropdownOpen}
-              style={{textAlign: 'left'}}
             >
-              -- Select a Medication --
-              <i className={`bi bi-chevron-${medicationsDropdownOpen ? 'up' : 'down'} ms-2`}></i>
+              <span>-- Select a Medication --</span>
+              {medicationsDropdownOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </button>
             
-            <ul 
-              className={`dropdown-menu w-100 ${medicationsDropdownOpen ? 'show' : ''}`} 
-              style={{maxHeight: '300px', overflowY: 'auto'}}
-            >
-            {isLoadingMedications ? (
-              <li className="dropdown-item text-center">
-                <div className="spinner-border spinner-border-sm me-2" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
-                <span>Loading medications...</span>
-              </li>
-            ) : medicationsError ? (
-              <li className="dropdown-item text-danger">
-                <i className="bi bi-exclamation-triangle me-2"></i>
-                <span>Error loading medications</span>
-              </li>
-            ) : medications.length === 0 ? (
-              <li className="dropdown-item text-center text-muted">
-                No medications found
-              </li>
-            ) : (
-              medications.map((medication) => (
-                <li key={medication.id}>
-                  <button 
-                    className="dropdown-item" 
-                    type="button"
-                    onClick={() => handleSelectMedication(medication)}
-                  >
-                    <div className="d-flex flex-column">
-                      <span>{medication.name}</span>
-                      <small className="text-muted">
-                        {medication.ingredient[0]?.strengthRatio && formatStrength(medication)}
-                        {medication.doseForm && ` (${medication.doseForm})`}
-                      </small>
-                    </div>
-                  </button>
-                </li>
-              ))
+            {medicationsDropdownOpen && (
+              <div className="absolute z-10 w-full mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                {isLoadingMedications ? (
+                  <div className="p-4 text-center text-muted-foreground">
+                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-2"></div>
+                    <span>Loading medications...</span>
+                  </div>
+                ) : medicationsError ? (
+                  <div className="p-4 text-red-400 flex items-center">
+                    <AlertTriangle className="h-4 w-4 mr-2" />
+                    <span>Error loading medications</span>
+                  </div>
+                ) : medications.length === 0 ? (
+                  <div className="p-4 text-center text-muted-foreground">
+                    No medications found
+                  </div>
+                ) : (
+                  medications.map((medication) => (
+                    <button 
+                      key={medication.id}
+                      className="w-full p-3 text-left hover:bg-accent focus:bg-accent focus:outline-none border-b border-border last:border-b-0"
+                      type="button"
+                      onClick={() => handleSelectMedication(medication)}
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-foreground font-medium">{medication.name}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {medication.ingredient[0]?.strengthRatio && formatStrength(medication)}
+                          {medication.doseForm && ` (${medication.doseForm})`}
+                        </span>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
             )}
-          </ul>
-        </div>
-        </div>
+          </div>
+        </FormField>
       )}
         
       {selectedMedication && (
-          <div className="medication-info mb-3">
-            <div className="d-flex flex-wrap gap-2 mt-1">
+        <>
+          <div className="p-4 bg-card rounded-lg border border-border">
+            <div className="flex flex-wrap gap-2">
               {selectedMedication.doseForm && (
-                <span className="badge bg-light text-dark border me-1">
+                <Badge variant="secondary" className="bg-secondary text-secondary-foreground">
                   {selectedMedication.doseForm}
-                </span>
+                </Badge>
               )}
               {selectedMedication.ingredient[0]?.strengthRatio && (
-                <span className="badge bg-light text-dark border me-1">
+                <Badge variant="secondary" className="bg-secondary text-secondary-foreground">
                   {formatStrength(selectedMedication)}
-                </span>
+                </Badge>
               )}
               {isMultiIngredient(selectedMedication) && (
-                <span className="badge bg-primary text-white" title="Multi-ingredient formulation - dosed by volume">
-                  <i className="bi bi-layers"></i> Multi-Ingredient
-                </span>
+                <Badge className="bg-primary/20 text-primary border-primary/30">
+                  <Layers className="h-3 w-3 mr-1" />
+                  Multi-Ingredient
+                </Badge>
               )}
               {selectedMedication.totalVolume && (
-                <span className="badge bg-light text-dark border me-1">
+                <Badge variant="secondary" className="bg-secondary text-secondary-foreground">
                   {selectedMedication.totalVolume.value} {selectedMedication.totalVolume.unit}
-                </span>
+                </Badge>
               )}
               {selectedMedication.extension?.[0]?.["us-controlled"] && (
-                <span className="badge bg-warning text-dark">
-                  Schedule {selectedMedication.extension[0].schedule}
-                </span>
-              )}
-              {selectedMedication.eligibleGenders && selectedMedication.eligibleGenders.length > 0 && (
-                <>
-                  {selectedMedication.eligibleGenders.map(gender => (
-                    <span 
-                      key={gender}
-                      className={`badge gender-${gender.toLowerCase()}`}
-                      title={`${gender} only medication`}
-                    >
-                      {gender === 'MALE' ? '♂' : gender === 'FEMALE' ? '♀' : '⚥'} {gender}
-                    </span>
-                  ))}
-                </>
-              )}
-              {selectedMedication.defaultSignatureSettings && (
-                <span className="badge bg-info text-dark" title="Has default signature settings">
-                  <i className="bi bi-star-fill"></i> Defaults
-                </span>
+                <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                  <AlertTriangle className="h-3 w-3 mr-1" />
+                  Controlled Substance
+                </Badge>
               )}
             </div>
           </div>
-      )}
 
-      {showDefaultsNotification && (
-        <div className="alert alert-info alert-dismissible fade show mt-2" role="alert">
-          <i className="bi bi-check-circle me-2"></i>
-          Default signature settings have been loaded
-        </div>
-      )}
+          {/* Show defaults notification */}
+          {showDefaultsNotification && (
+            <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-400 text-sm flex items-center">
+              <Info className="h-4 w-4 mr-2 flex-shrink-0" />
+              Default values have been applied based on medication configuration
+            </div>
+          )}
 
-      {selectedMedication && (
-        <>
           {/* Dose Input */}
-          <div className="form-group mb-3">
-            <label className="form-label">Dose</label>
+          <FormField label="Dose">
             {showDualInput ? (
-              <div className="dual-dose-container">
-                <div className="dose-field">
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={primaryDoseValue}
-                    onChange={handlePrimaryDoseChange}
-                    step="any"
-                    placeholder="0"
-                    aria-label={`Dose in ${primaryUnit}`}
-                  />
-                  <span className="unit-label">{primaryUnit}</span>
-                </div>
-                
-                <div className="conversion-arrow">
-                  <i className="bi bi-arrow-left-right"></i>
-                </div>
-                
-                <div className="dose-field">
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={secondaryDoseValue}
-                    onChange={handleSecondaryDoseChange}
-                    step="any"
-                    placeholder="0"
-                    aria-label={`Dose in ${secondaryUnit}`}
-                  />
-                  <span className="unit-label">{secondaryUnit}</span>
-                </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={primaryDoseValue}
+                  onChange={(e) => handleDoseInputChange(e.target.value, primaryUnit, true)}
+                  placeholder="0"
+                  step={selectedMedication?.dosageConstraints?.step || "0.25"}
+                  min="0"
+                  className={`bg-input border-input text-foreground ${errors.dose ? 'border-destructive' : ''}`}
+                />
+                <span className="text-muted-foreground">{primaryUnit}, as</span>
+                <Input
+                  type="number"
+                  value={secondaryDoseValue}
+                  onChange={(e) => handleDoseInputChange(e.target.value, secondaryUnit, false)}
+                  placeholder="0"
+                  step="0.1"
+                  min="0"
+                  className="bg-input border-input text-foreground"
+                />
+                <span className="text-muted-foreground">{secondaryUnit}</span>
               </div>
             ) : (
-              <div className="input-group">
-                <input
+              <div className="flex gap-2">
+                <Input
                   type="number"
-                  className="form-control"
-                  value={dosage.value || ''}
-                  onChange={handleSingleDoseChange}
-                  step="0.01"
-                  placeholder="Amount"
-                  aria-label="Dose amount"
+                  value={primaryDoseValue}
+                  onChange={(e) => handleDoseInputChange(e.target.value, primaryUnit, true)}
+                  placeholder="Enter dose"
+                  step={selectedMedication?.dosageConstraints?.step || "0.25"}
+                  min="0"
+                  className={`flex-1 bg-input border-input text-foreground ${errors.dose ? 'border-destructive' : ''}`}
                 />
-                <select
-                  className="form-select flex-grow-0 w-auto"
-                  value={dosage.unit}
-                  onChange={handleDoseUnitChange}
-                  disabled={unitOptions.length <= 1}
-                  aria-label="Dose unit"
-                >
-                  {unitOptions.map(unit => (
-                    <option key={unit} value={unit}>{unit}</option>
-                  ))}
-                </select>
+                {unitOptions.length > 1 ? (
+                  <Select value={primaryUnit} onValueChange={handleUnitChange}>
+                    <SelectTrigger className="w-32 bg-input border-input text-foreground">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border">
+                      {unitOptions.map(unit => (
+                        <SelectItem key={unit} value={unit} className="text-foreground hover:bg-accent">
+                          {unit}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="flex items-center px-3 bg-muted border border-border rounded-md">
+                    <span className="text-muted-foreground">{primaryUnit}</span>
+                  </div>
+                )}
               </div>
             )}
-            
+            {errors.dose && (
+              <p className="mt-1 text-sm text-red-400">{errors.dose}</p>
+            )}
             {constraints && (
-              <div className="constraint-info small mt-1">
-                {constraints.map((constraint, idx) => (
-                  <span key={idx} className="me-2 badge bg-light text-dark border">
-                    <i className={`bi bi-arrow-${constraint.type === 'min' ? 'down' : 'up'}-short`}></i>
-                    {' '}{constraint.type === 'min' ? 'Min' : 'Max'}: {constraint.value} {constraint.unit}
+              <div className="mt-1 text-xs text-muted-foreground">
+                {constraints.map((c, i) => (
+                  <span key={i}>
+                    {c.type === 'min' ? 'Min' : 'Max'}: {c.value} {c.unit}
+                    {i < constraints.length - 1 && ' • '}
                   </span>
                 ))}
               </div>
             )}
-          </div>
+          </FormField>
 
-          {/* Route Selector */}
-          <div className="form-group mb-3">
-            <label className="form-label">Route</label>
-            <RouteSelector
-              medication={selectedMedication}
-              selectedRoute={route}
-              onSelectRoute={onRouteChange}
-              error={errors.route}
-            />
-          </div>
+          {/* Route Display */}
+          <FormField label="Route">
+            <div className="flex items-center px-3 py-2 bg-muted border border-border rounded-md">
+              <span className="text-muted-foreground">{route}</span>
+            </div>
+          </FormField>
 
           {/* Frequency Selector */}
-          <div className="form-group mb-3">
-            <label className="form-label">Frequency</label>
-            <div className="dropdown">
-              <button 
-                className="form-select d-flex justify-content-between align-items-center"
-                type="button"
-                onClick={() => setFrequencyDropdownOpen(!frequencyDropdownOpen)}
-                aria-expanded={frequencyDropdownOpen}
-                style={{textAlign: 'left'}}
-              >
-                {frequency || '-- Select Frequency --'}
-                <i className={`bi bi-chevron-${frequencyDropdownOpen ? 'up' : 'down'} ms-2`}></i>
-              </button>
-              
-              <ul 
-                className={`dropdown-menu w-100 ${frequencyDropdownOpen ? 'show' : ''}`} 
-                style={{maxHeight: '300px', overflowY: 'auto'}}
-              >
-                <li><h6 className="dropdown-header">Daily</h6></li>
-                {dailyFrequencies.map(frequency => (
-                  <li key={frequency.value}>
-                    <button 
-                      className="dropdown-item" 
-                      type="button"
-                      onClick={() => handleSelectFrequency(frequency.value)}
-                    >
-                      {frequency.label}
-                    </button>
-                  </li>
-                ))}
-                
-                <li><hr className="dropdown-divider" /></li>
-                <li><h6 className="dropdown-header">Weekly</h6></li>
-                {weeklyFrequencies.map(frequency => (
-                  <li key={frequency.value}>
-                    <button 
-                      className="dropdown-item" 
-                      type="button"
-                      onClick={() => handleSelectFrequency(frequency.value)}
-                    >
-                      {frequency.label}
-                    </button>
-                  </li>
-                ))}
-                
-                <li><hr className="dropdown-divider" /></li>
-                <li><h6 className="dropdown-header">Monthly</h6></li>
-                {monthlyFrequencies.map(frequency => (
-                  <li key={frequency.value}>
-                    <button 
-                      className="dropdown-item" 
-                      type="button"
-                      onClick={() => handleSelectFrequency(frequency.value)}
-                    >
-                      {frequency.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            {frequency && frequencies[frequency] && (
-              <div className="mt-2 d-flex align-items-center">
-                {frequencies[frequency].abbreviation && (
-                  <span className="badge bg-light text-dark border me-2">
-                    {frequencies[frequency].abbreviation}
-                  </span>
+          <FormField label="Frequency">
+            <Select value={frequency} onValueChange={onFrequencyChange}>
+              <SelectTrigger className="bg-input border-input text-foreground">
+                <SelectValue placeholder="Select frequency" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border">
+                {dailyFrequencies.length > 0 && (
+                  <>
+                    <div className="px-2 py-1 text-xs text-muted-foreground">Daily</div>
+                    {dailyFrequencies.map(freq => (
+                      <SelectItem key={freq.value} value={freq.value} className="text-foreground hover:bg-accent">
+                        {freq.label}
+                      </SelectItem>
+                    ))}
+                  </>
                 )}
-                <small className="text-muted" style={{fontSize: "0.7rem"}}>
-                  {frequencies[frequency].humanReadable}
-                </small>
-              </div>
-            )}
-          </div>
+                {weeklyFrequencies.length > 0 && (
+                  <>
+                    <div className="px-2 py-1 text-xs text-muted-foreground mt-2">Weekly</div>
+                    {weeklyFrequencies.map(freq => (
+                      <SelectItem key={freq.value} value={freq.value} className="text-foreground hover:bg-accent">
+                        {freq.label}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+                {monthlyFrequencies.length > 0 && (
+                  <>
+                    <div className="px-2 py-1 text-xs text-muted-foreground mt-2">Monthly</div>
+                    {monthlyFrequencies.map(freq => (
+                      <SelectItem key={freq.value} value={freq.value} className="text-foreground hover:bg-accent">
+                        {freq.label}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+          </FormField>
 
           {/* Special Instructions */}
-          {route && (
-            <div className="form-group mb-3">
-              <label className="form-label">Special Instructions</label>
-              {suggestSpecialInstructions && (
-                <div className="d-flex mb-2">
-                  <span className="badge bg-info text-white d-inline-flex align-items-center" style={{fontSize: "0.7rem"}}>
-                    <i className="bi bi-info-circle me-1"></i>
-                    Recommended for {routeInfo?.humanReadable}
-                  </span>
+          <FormField label="Special Instructions">
+            {suggestSpecialInstructions && (
+              <span className="ml-2 text-xs text-yellow-400">(Recommended for {route})</span>
+            )}
+            <Input
+              value={specialInstructions}
+              onChange={(e) => onSpecialInstructionsChange(e.target.value)}
+              placeholder="e.g., with food, apply to affected area"
+              className="bg-input border-input text-foreground"
+            />
+          </FormField>
+
+          {/* Days Supply */}
+          {daysSupply && (
+            <div className="p-4 bg-card rounded-lg border border-border">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Calculator className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-secondary-foreground">Days Supply</span>
+                </div>
+                <span className="text-lg font-bold text-foreground">{daysSupply} days</span>
+              </div>
+              {selectedMedication.packageInfo && (
+                <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
+                  <Package className="h-3 w-3" />
+                  Package: {selectedMedication.packageInfo.quantity} {selectedMedication.packageInfo.unit}
                 </div>
               )}
-              
-              <textarea
-                className="form-control"
-                value={specialInstructions}
-                onChange={handleSpecialInstructionsChange}
-                placeholder={suggestSpecialInstructions 
-                  ? `${routeInfo?.humanReadable} site or location (optional)` 
-                  : "Additional instructions (optional)"}
-                rows={2}
-              />
-              
-              <div className="form-text small mt-1">
-                {suggestSpecialInstructions 
-                  ? `Consider specifying the ${routeInfo?.humanReadable.toLowerCase()} site`
-                  : 'E.g., "with food", "on empty stomach", "in left arm"'}
-              </div>
             </div>
           )}
 
-          {/* Days Supply Calculator */}
-          {daysSupply !== null && (
-            <div className="days-supply-calculator mb-3">
-              <h5>Days Supply</h5>
-              <p className="mb-0">
-                <strong>{daysSupply} days</strong> based on package size and dosing frequency
-              </p>
-              <small className="text-muted">
-                Package: {selectedMedication.packageInfo?.quantity} {selectedMedication.packageInfo?.unit} | 
-                Dose: {dosage.value} {dosage.unit} | 
-                Frequency: {frequencies[frequency]?.humanReadable}
-              </small>
-            </div>
-          )}
-
-          {/* FHIR Structure Viewer Toggle */}
-          <div className="mb-3">
-            <button 
-              type="button"
-              className="btn btn-link btn-sm p-0"
-              onClick={() => setShowFHIRViewer(!showFHIRViewer)}
-            >
-              <i className={`bi bi-chevron-${showFHIRViewer ? 'up' : 'down'} me-1`}></i>
-              {showFHIRViewer ? 'Hide' : 'Show'} FHIR Structure
-            </button>
-          </div>
-
-          {/* FHIR Structure Viewer */}
-          {showFHIRViewer && signature && (
-            <FHIRStructureViewer fhirData={signature.fhirRepresentation} />
+          {/* Signature Output */}
+          {signature && (
+            <Card className="bg-card border-border">
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <CardTitle className="text-lg font-bold text-foreground">Generated Signature</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowFHIRViewer(!showFHIRViewer)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  {showFHIRViewer ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  <span className="ml-2">FHIR</span>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="p-4 bg-secondary rounded-lg">
+                  <p className="text-foreground font-medium">{signature.humanReadable}</p>
+                </div>
+                {showFHIRViewer && (
+                  <div className="mt-4">
+                    <FHIRStructureViewer data={signature.fhirRepresentation} />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
         </>
       )}
-
-      <style>{`
-        .signature-builder {
-          padding: 1rem;
-        }
-
-        .dual-dose-container {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .dose-field {
-          flex: 1;
-          position: relative;
-        }
-
-        .unit-label {
-          position: absolute;
-          right: 12px;
-          top: 50%;
-          transform: translateY(-50%);
-          color: #6c757d;
-          pointer-events: none;
-        }
-
-        .conversion-arrow {
-          color: #6c757d;
-          font-size: 1.2rem;
-        }
-
-        .days-supply-calculator {
-          padding: 1rem;
-          border: 1px solid #007bff;
-          border-radius: 4px;
-          background-color: #f0f8ff;
-        }
-
-        .days-supply-calculator h5 {
-          margin-top: 0;
-          margin-bottom: 0.5rem;
-        }
-
-        .dropdown-menu {
-          position: absolute;
-          z-index: 1000;
-        }
-
-        .dropdown-menu.show {
-          display: block;
-        }
-
-        .constraint-info {
-          margin-top: 0.25rem;
-        }
-      `}</style>
     </div>
   );
 };

@@ -13,7 +13,7 @@ The Medication Signature Builder is a React/TypeScript web application designed 
 ## Tech Stack
 - **Frontend**: React 18 with TypeScript
 - **Build Tool**: Vite
-- **Styling**: Bootstrap (via CDN in index.html)
+- **Styling**: Tailwind CSS with custom Marek Health design system
 - **Database**: Supabase (PostgreSQL)
 - **State Management**: useReducer hook with custom reducer
 - **Package Manager**: npm
@@ -54,12 +54,20 @@ The Medication Signature Builder is a React/TypeScript web application designed 
 - JSONB fields for complex nested data
 - Database adapter for camelCase/snake_case conversion
 
-## Recent Refactoring (Phase 1-4 Complete)
+## Recent Updates
+### Refactoring (Phase 1-4 Complete)
 - **Massive code reduction**: From 40+ files to 15 source files
 - **Consolidated components**: 16 components → 4 focused components
 - **Unified API layer**: 5 service files → 1 medications API
 - **Simplified logic**: 722 lines of utilities → 399 lines in lib/
 - **Preserved all functionality** while improving maintainability
+
+### UI Styling Update (2025-07-04)
+- Updated to match Marek Health design system
+- Dark sidebar (gray-900) with emoji icons instead of SVG
+- Light main content area (gray-800) 
+- Tables with slightly darker background (gray-750)
+- Consistent use of Marek brand colors throughout
 
 ## Project Structure (After Refactoring)
 ```
@@ -128,4 +136,4 @@ The application has been successfully refactored to a minimal, clean codebase wh
 ## Integration Points
 - FHIR-compatible output for healthcare system integration
 - Supabase for cloud database storage
-- Bootstrap for consistent healthcare UI patterns
+- Tailwind CSS for modern, responsive UI with Marek Health design system

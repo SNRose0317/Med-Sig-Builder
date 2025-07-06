@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 interface FHIRStructureViewerProps {
-  fhirData: any;
+  data: any;
 }
 
-const FHIRStructureViewer: React.FC<FHIRStructureViewerProps> = ({ fhirData }) => {
+const FHIRStructureViewer: React.FC<FHIRStructureViewerProps> = ({ data }) => {
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set(['root']));
 
   const togglePath = (path: string) => {
@@ -19,33 +20,33 @@ const FHIRStructureViewer: React.FC<FHIRStructureViewerProps> = ({ fhirData }) =
 
   const renderValue = (value: any, path: string = 'root', depth: number = 0): JSX.Element => {
     if (value === null || value === undefined) {
-      return <span className="text-muted">null</span>;
+      return <span className="text-muted-foreground">null</span>;
     }
 
     if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-      return <span className="text-primary">{JSON.stringify(value)}</span>;
+      return <span className="text-blue-400">{JSON.stringify(value)}</span>;
     }
 
     if (Array.isArray(value)) {
       if (value.length === 0) {
-        return <span className="text-muted">[]</span>;
+        return <span className="text-muted-foreground">[]</span>;
       }
       
       const isExpanded = expandedPaths.has(path);
       return (
         <span>
           <button
-            className="btn btn-link btn-sm p-0 me-1"
+            className="p-0 mr-1 text-muted-foreground hover:text-foreground focus:outline-none"
             onClick={() => togglePath(path)}
           >
-            <i className={`bi bi-chevron-${isExpanded ? 'down' : 'right'}`}></i>
+            {isExpanded ? <ChevronDown className="inline h-3 w-3" /> : <ChevronRight className="inline h-3 w-3" />}
           </button>
-          [{value.length}]
+          <span className="text-muted-foreground">[{value.length}]</span>
           {isExpanded && (
-            <div className="ms-3">
+            <div className="ml-6">
               {value.map((item, index) => (
-                <div key={index}>
-                  [{index}]: {renderValue(item, `${path}.${index}`, depth + 1)}
+                <div key={index} className="py-0.5">
+                  <span className="text-muted-foreground">[{index}]:</span> {renderValue(item, `${path}.${index}`, depth + 1)}
                 </div>
               ))}
             </div>
@@ -57,24 +58,25 @@ const FHIRStructureViewer: React.FC<FHIRStructureViewerProps> = ({ fhirData }) =
     if (typeof value === 'object') {
       const keys = Object.keys(value);
       if (keys.length === 0) {
-        return <span className="text-muted">{}</span>;
+        return <span className="text-muted-foreground">{'{}'}</span>;
       }
 
       const isExpanded = expandedPaths.has(path);
       return (
         <span>
           <button
-            className="btn btn-link btn-sm p-0 me-1"
+            className="p-0 mr-1 text-muted-foreground hover:text-foreground focus:outline-none"
             onClick={() => togglePath(path)}
           >
-            <i className={`bi bi-chevron-${isExpanded ? 'down' : 'right'}`}></i>
+            {isExpanded ? <ChevronDown className="inline h-3 w-3" /> : <ChevronRight className="inline h-3 w-3" />}
           </button>
-          {`{ ${keys.length} properties }`}
+          <span className="text-muted-foreground">{`{ ${keys.length} properties }`}</span>
           {isExpanded && (
-            <div className="ms-3">
+            <div className="ml-6">
               {keys.map(key => (
-                <div key={key}>
-                  <span className="text-info">{key}</span>: {renderValue(value[key], `${path}.${key}`, depth + 1)}
+                <div key={key} className="py-0.5">
+                  <span className="text-cyan-400">{key}</span>
+                  <span className="text-muted-foreground">:</span> {renderValue(value[key], `${path}.${key}`, depth + 1)}
                 </div>
               ))}
             </div>
@@ -83,14 +85,14 @@ const FHIRStructureViewer: React.FC<FHIRStructureViewerProps> = ({ fhirData }) =
       );
     }
 
-    return <span>{JSON.stringify(value)}</span>;
+    return <span className="text-secondary-foreground">{JSON.stringify(value)}</span>;
   };
 
   return (
-    <div className="fhir-structure-viewer p-3 bg-light rounded">
-      <h6 className="mb-3">FHIR MedicationRequest Structure</h6>
-      <div className="fhir-tree" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-        {renderValue(fhirData)}
+    <div className="p-4 bg-card rounded-lg">
+      <h6 className="mb-3 text-sm font-semibold text-secondary-foreground">FHIR MedicationRequest Structure</h6>
+      <div className="font-mono text-sm text-secondary-foreground">
+        {renderValue(data)}
       </div>
     </div>
   );
