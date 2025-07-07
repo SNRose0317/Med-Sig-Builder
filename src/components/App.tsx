@@ -17,7 +17,7 @@ const sidebarItems = [
 
 const settingsItems = [
   { name: "User Management", icon: "⚙️", active: false },
-  { name: "Inventory", icon: "⚙️", active: true },
+  { name: "Medications", icon: "💊", active: true },
   { name: "Templates", icon: "⚙️", active: false },
   { name: "Integrations", icon: "⚙️", active: false },
   { name: "Billing", icon: "⚙️", active: false },
@@ -101,7 +101,7 @@ function App() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-8">
               <MarekLogo />
-              <div className="text-sm text-marek-gray-400 font-medium">Inventory Management System</div>
+              <div className="text-sm text-marek-gray-400 font-medium">Medication Management System</div>
             </div>
             <div className="flex items-center gap-4">
               <div className="relative">
@@ -140,18 +140,18 @@ function App() {
         <div className="flex-1 bg-marek-gray-800 p-8 overflow-auto">
           {/* Breadcrumb & Title */}
           <div className="mb-8">
-            <div className="text-sm text-marek-gray-500 mb-3 font-medium">Settings / Inventory Management</div>
+            <div className="text-sm text-marek-gray-500 mb-3 font-medium">Settings / Medication Management</div>
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 bg-marek-white rounded-xl flex items-center justify-center shadow-sm border border-marek-gray-200">
                 <span className="text-xl">📋</span>
               </div>
-              <h1 className="text-4xl font-bold text-marek-white">Inventory Management</h1>
+              <h1 className="text-4xl font-bold text-marek-white">Medication Management</h1>
             </div>
           </div>
 
           {/* Tabs */}
           <div className="flex gap-8 mb-8 border-b border-marek-gray-700">
-            <button className="pb-4 px-2 border-b-3 border-marek-red text-marek-red font-bold text-lg">Items</button>
+            <button className="pb-4 px-2 border-b-3 border-marek-red text-marek-red font-bold text-lg">Medications</button>
             <button className="pb-4 px-2 text-marek-gray-400 hover:text-marek-gray-300 font-bold text-lg">
               Vendors
             </button>

@@ -12,8 +12,8 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    strictPort: true,
-    host: '0.0.0.0' // Force IPv4 binding to work around Node v23 issues
+    strictPort: false,
+    host: 'localhost'
   },
   optimizeDeps: {
     include: ['uuid']

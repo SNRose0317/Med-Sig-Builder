@@ -16,7 +16,7 @@ export function MedicationTable({ medications, loading, onMedicationClick }: Med
       <div className="bg-marek-gray-750 rounded-2xl overflow-hidden border border-marek-gray-600 shadow-lg">
         <div className="p-12 text-center text-marek-gray-500">
           <div className="animate-spin w-8 h-8 border-3 border-marek-red border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="font-medium text-marek-gray-300">Loading inventory items...</p>
+          <p className="font-medium text-marek-gray-300">Loading medications...</p>
         </div>
       </div>
     );
@@ -76,7 +76,7 @@ export function MedicationTable({ medications, loading, onMedicationClick }: Med
                       <span className="text-3xl">📋</span>
                     </div>
                     <div>
-                      <p className="font-semibold text-lg text-marek-white">No inventory items found</p>
+                      <p className="font-semibold text-lg text-marek-white">No medications found</p>
                       <p className="text-sm text-marek-gray-400 mt-1">Try adjusting your search or filters</p>
                     </div>
                   </div>

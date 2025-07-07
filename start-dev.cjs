@@ -15,9 +15,9 @@ const env = {
   VITE_HOST: '127.0.0.1'
 };
 
-const vite = spawn('npx', ['vite', '--host', '127.0.0.1'], {
+const vite = spawn('npx', ['vite'], {
   cwd: path.resolve(__dirname),
-  env,
+  env: process.env,
   stdio: 'inherit'
 });
 
