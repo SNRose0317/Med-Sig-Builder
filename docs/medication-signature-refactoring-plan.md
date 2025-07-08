@@ -54,9 +54,11 @@ All modules must implement `explain(): string` for audit trails
 - **Subtask 1.1.1**: Create MedicationProfile Interface
   - Include all existing Medication fields
   - Add flags: isFractional, isTaper, isMultiIngredient
+  - Add isScored: enum {NONE, HALF, QUARTER} for tablet splitting safety
   - Add concentrationRatio for liquids
   - Add molarMass for electrolyte conversions
-  - Support runtime custom conversions array
+  - Support runtime custom conversions array with lot-specific overrides
+  - Add dispenserMetadata for air-prime loss tracking
   - Document with JSDoc comments
   - **Deliverable**: `src/types/MedicationProfile.ts`
 
@@ -88,25 +90,36 @@ All modules must implement `explain(): string` for audit trails
 
 - **Subtask 1.2.2**: Design Strategy Pattern Contracts
   - Define InstructionStrategy type with SpecificityLevel enum
-  - Remove numeric scoring in favor of explicit levels
-  - Document strategy selection algorithm
+  - Define IBaseStrategy interface with buildInstruction() method
+  - Define IModifierStrategy interface with:
+    - appliesTo(context): boolean method
+    - modify(instruction): SignatureInstruction method
+    - priority: number for execution order
+  - Document strategy selection algorithm and modifier composition flow
   - **Deliverable**: `src/lib/strategies/types.ts`
 
 - **Subtask 1.2.3**: Plan Functional Architecture
   - Define composable function signatures
   - Document data flow boundaries
   - Create type-safe predicate system
+  - Define ErrorResponse DTO for structured API failures
   - **Deliverable**: `docs/functional-architecture.md`
 
 #### Task 1.3: Design Immutable Value Objects for Doses
 - Define Dose, Frequency, Route as immutable types
+- Create branded types for compile-time dimension analysis (Mass vs Volume)
 - Never allow naked numbers in the system
 - Include validation in constructors
+- Route object encapsulates verb and allowed instructions
 - **Deliverable**: `src/types/value-objects.ts`
 
 #### Task 1.4: Create Clinical Guardrails Schema
 - Design YAML schema for clinical constraints
 - Include max doses, contraindications, interactions
+- Add max volume per injection site (e.g., SubQ ≤ 1mL, IM ≤ 5mL)
+- Add reconstitution rules for powder vials
+- Add multi-strength pack support
+- Add age-dependent fractional limits
 - Plan for versioning and change management
 - **Deliverable**: `src/guardrails/schema.yaml`
 
@@ -136,19 +149,22 @@ All modules must implement `explain(): string` for audit trails
   - **Deliverable**: Proof of concept implementations
 
 #### Task 2.2: Build Unit Converter Service
-- **Subtask 2.2.1**: Create Anti-Corruption Layer
-  - Wrap selected UCUM library
-  - Define clean public interface
-  - Implement explain() method for all conversions
-  - Isolate third-party dependencies
+- **Subtask 2.2.1**: Create Two-Tier Anti-Corruption Layer
+  - Tier 1: Wrap @lhncbc/ucum-lhc for strict UCUM compliance
+  - Tier 2: DeviceUnitAdapter for custom units (namespace with braces: {click})
+  - Implement canonicalization: convert custom units to UCUM before processing
+  - Public convert() method with full explain() tracing
+  - Support lot-specific overrides and air-prime loss calculations
   - **Deliverable**: `src/lib/units/UnitConverter.ts`
 
 - **Subtask 2.2.2**: Implement Medication-Specific Conversions
-  - Support runtime custom conversions from MedicationProfile
-  - Topiclick: 4 clicks = 1 mL (via configuration)
+  - DeviceUnitAdapter registry: { "id":"{click}", "display":"click", "ratioTo":"mL", "factor":0.25 }
+  - Support runtime loading from MedicationProfile with lot-specific variations
+  - Handle air-prime loss (e.g., first 2 clicks wasted)
   - Concentration-based: mg → mL using strength ratio
   - Tablet strength: tablets → mg using ingredient data
-  - **Deliverable**: `src/lib/units/MedicationConversions.ts`
+  - Use rational numbers (Fraction.js) to avoid floating-point drift
+  - **Deliverable**: `src/lib/units/DeviceUnitAdapter.ts`
 
 - **Subtask 2.2.3**: Define Error Handling Strategy
   - ImpossibleConversionError
@@ -185,11 +201,14 @@ All modules must implement `explain(): string` for audit trails
 - **Subtask 2.5.1**: Set up fast-check
   - Configure for TypeScript
   - Create generators for medication contexts
+  - Generate random conversion paths (UCUM × device units)
   - **Deliverable**: Test framework setup
 
 - **Subtask 2.5.2**: Build Golden Master Differential Harness
   - Property-based comparison of legacy vs new
   - Automated edge case discovery
+  - Guarantee round-trip conversions with <1e-6 delta
+  - Test chained conversions for floating-point stability
   - **Deliverable**: `tests/property-based/harness.ts`
 
 ---
@@ -199,16 +218,18 @@ All modules must implement `explain(): string` for audit trails
 **Objective**: Build the framework components and establish comprehensive testing infrastructure.
 
 #### Task 3.1: Implement Dispatcher System
-- **Subtask 3.1.1**: Build Specificity-Scored Dispatcher
-  - Predicate-based selection with scoring (0-100)
-  - Most specific strategy wins
-  - Order-independent registration
+- **Subtask 3.1.1**: Build Specificity-Based Dispatcher
+  - Selects the single strategy with the highest `SpecificityLevel` that matches the given `MedicationRequestContext`
+  - Throws an error if multiple strategies exist at the same highest level
+  - Implements base+modifier composition: finds best BaseStrategy, then applies all matching ModifierStrategies
+  - Order-independent registration with deterministic modifier execution order
   - **Deliverable**: `src/lib/dispatcher/StrategyDispatcher.ts`
 
-- **Subtask 3.1.2**: Create Strategy Registry
-  - Hold all InstructionStrategy implementations
-  - Support dynamic registration
-  - Provide debugging/introspection
+- **Subtask 3.1.2**: Create Strategy Registry with Composition Support
+  - Hold all BaseStrategy and ModifierStrategy implementations
+  - Support dynamic registration with priority-based modifier ordering
+  - Each modifier has explicit execution priority to ensure deterministic order
+  - Provide debugging/introspection including composition chain visualization
   - **Deliverable**: `src/lib/dispatcher/StrategyRegistry.ts`
 
 #### Task 3.2: Build Template Engine
@@ -251,13 +272,19 @@ All modules must implement `explain(): string` for audit trails
   - **Deliverable**: `tests/golden-master/dataset.json`
 
 #### Task 3.5: Refactor calculateDaysSupply
-- **Subtask 3.5.1**: Extract Shared Temporal Parser
-  - Parse frequency strings to structured data
-  - Handle all period units correctly (not hardcoded 30 days/month)
-  - **Deliverable**: `src/lib/temporal/TemporalParser.ts`
+- **Subtask 3.5.1**: Extract Shared Temporal Parser with FHIR Support
+  - Parse frequency strings to structured FHIR Timing data
+  - Support full FHIR Timing complexity:
+    - repeat.dayOfWeek (e.g., "Mondays and Fridays")
+    - repeat.when (MORN, AFT, EVE, NIGHT)
+    - Complex cycles ("3 days on, 4 days off")
+  - Use ISO 8601 durations to eliminate 30 days/month bug
+  - **Deliverable**: `src/lib/temporal/FHIRTemporalParser.ts`
 
 - **Subtask 3.5.2**: Implement DaysSupplyStrategy
   - Dispatch based on medication context
+  - Distinguish dispense-unit vs display-unit for calculations
+  - Handle air-prime loss for dispensers
   - Use UCUM for accurate conversions
   - **Deliverable**: `src/lib/strategies/DaysSupplyStrategy.ts`
 
@@ -349,12 +376,15 @@ All modules must implement `explain(): string` for audit trails
   - Log execution metrics
   - **Deliverable**: `tests/validation/dual-run-harness.ts`
 
-- **Subtask 5.2.2**: Implement Semantic Diffing
-  - Parse legacy strings to structured format
-  - Build confidence score for parse quality
-  - Compare clinical intent, not text
-  - Flag low-confidence parses for human review
-  - **Deliverable**: `tests/validation/semantic-diff.ts`
+- **Subtask 5.2.2**: Build 3-Panel Clinical Review Harness
+  - Present side-by-side comparison:
+    1. Legacy string output
+    2. New system string output
+    3. New system structured SignatureInstruction (JSON)
+  - Use structured re-generation: regenerate legacy format from stored structured data
+  - Only parse free-text for the ~5% of orders missing structured data
+  - Enable clinical reviewers to quickly identify if differences are bugs or improvements
+  - **Deliverable**: `tests/validation/clinical-review-harness.ts`
 
 #### Task 5.3: Discrepancy Management
 - **Subtask 5.3.1**: Build Triage System
@@ -472,6 +502,242 @@ All modules must implement `explain(): string` for audit trails
 
 ---
 
+## Branching, Testing, and Merge Strategy
+
+### Overview
+
+This section outlines the safe, incremental approach to developing, testing, and merging the refactored codebase from the `simplify-refact` branch back to `main`.
+
+### Branch Structure
+
+```
+main (production)
+└── simplify-refact (feature branch)
+    ├── simplify-refact-epic1-contracts
+    ├── simplify-refact-epic2-unit-converter
+    ├── simplify-refact-epic3-framework
+    ├── simplify-refact-epic4-builders
+    └── simplify-refact-epic5-validation
+```
+
+### Development Phases
+
+#### Phase 1: Foundation Development (Weeks 1-6)
+
+1. **Epic Branch Strategy**
+   - Create sub-branches from `simplify-refact` for each Epic
+   - Developers work on epic branches, not directly on `simplify-refact`
+   - Daily commits with descriptive messages
+   - PR from epic branch to `simplify-refact` when epic completes
+
+2. **Main Branch Synchronization**
+   - Weekly sync: `git merge origin/main` into `simplify-refact`
+   - Resolve conflicts immediately to prevent drift
+   - Critical hotfixes to main get cherry-picked same day
+
+3. **Feature Flag Implementation**
+   ```typescript
+   // Early in Epic 1: Create feature flag system
+   const FEATURES = {
+     USE_NEW_SIGNATURE_BUILDER: process.env.ENABLE_NEW_BUILDER === 'true',
+     USE_NEW_UNIT_CONVERTER: process.env.ENABLE_NEW_CONVERTER === 'true',
+   };
+   ```
+
+#### Phase 2: Shadow Mode Integration (Weeks 7-9)
+
+1. **Merge All Epic Branches**
+   - Sequential merges into `simplify-refact`
+   - Full integration test suite after each merge
+   - Deploy to staging environment
+
+2. **Shadow Mode Setup**
+   ```typescript
+   // Both systems run, new system logs only
+   const legacyResult = legacySignatureBuilder.build(request);
+   const newResult = FEATURES.USE_NEW_SIGNATURE_BUILDER 
+     ? newSignatureBuilder.build(request)
+     : null;
+   
+   if (newResult) {
+     logComparison(legacyResult, newResult);
+   }
+   return legacyResult; // Users still get legacy
+   ```
+
+3. **Monitoring Infrastructure**
+   - Deploy comparison dashboard
+   - Alert on >5% discrepancy rate
+   - Log all differences for clinical review
+
+#### Phase 3: Validation & Testing (Weeks 9-10)
+
+1. **Test Execution Matrix**
+   | Test Type | Frequency | Success Criteria |
+   |-----------|-----------|------------------|
+   | Unit Tests | Every commit | 100% pass, >90% coverage |
+   | Integration | Daily | All API contracts maintained |
+   | Golden Master | Daily in shadow | <5% discrepancy |
+   | Load Tests | Weekly | <100ms P95 latency |
+   | Security Scan | Epic completion | No critical vulnerabilities |
+
+2. **Clinical Validation**
+   - Export all discrepancies to review tool
+   - Clinical team reviews 3-panel comparison
+   - Sign-off required before proceeding
+
+#### Phase 4: Staged Rollout (Weeks 11-12)
+
+1. **Feature Flag Rollout**
+   ```yaml
+   # rollout-config.yaml
+   stages:
+     - name: internal
+       percentage: 100
+       users: ["*@company.com"]
+       duration: 2 days
+     
+     - name: beta
+       percentage: 1
+       duration: 2 days
+       
+     - name: early_adopters
+       percentage: 10
+       duration: 3 days
+       
+     - name: general_availability
+       percentage: 50
+       duration: 3 days
+       
+     - name: full_rollout
+       percentage: 100
+   ```
+
+2. **Rollout Gates**
+   - Error rate <0.1% to proceed
+   - No critical bugs reported
+   - Performance metrics stable
+   - Clinical team approval
+
+3. **Rollback Plan**
+   - One-click feature flag disable
+   - Automated triggers on error threshold
+   - Runbook for manual intervention
+
+#### Phase 5: Final Merge (Week 12)
+
+1. **Pre-Merge Checklist**
+   - [ ] All tests passing
+   - [ ] 100% rollout stable for 48 hours
+   - [ ] Documentation updated
+   - [ ] Rollback tested successfully
+   - [ ] Clinical sign-off obtained
+   - [ ] Performance benchmarks met
+
+2. **Merge Process**
+   ```bash
+   # Create PR from simplify-refact to main
+   git checkout simplify-refact
+   git pull origin main  # Final sync
+   git push origin simplify-refact
+   
+   # GitHub PR with:
+   # - Squash merge option
+   # - Comprehensive description
+   # - Link to test results
+   # - Required reviewers: Tech Lead, Clinical Lead
+   ```
+
+3. **Post-Merge**
+   - Tag release: `v2.0.0-signature-refactor`
+   - Keep `simplify-refact` branch for 30 days
+   - Monitor production metrics closely
+   - Daily standup for 1 week post-merge
+
+### Testing Strategy Details
+
+#### Continuous Integration Pipeline
+
+```yaml
+# .github/workflows/refactor-ci.yml
+on:
+  push:
+    branches: [simplify-refact, simplify-refact-*]
+
+jobs:
+  test:
+    - lint
+    - type-check  
+    - unit-tests (with coverage)
+    - integration-tests
+    - build
+    - security-scan
+```
+
+#### Shadow Mode Validation
+
+1. **Comparison Logic**
+   ```typescript
+   class ShadowModeValidator {
+     compare(legacy: SignatureResult, new: SignatureResult): ComparisonResult {
+       return {
+         identical: this.normalizedCompare(legacy, new),
+         differences: this.getDifferences(legacy, new),
+         severity: this.assessSeverity(differences),
+         confidence: this.calculateConfidence(new)
+       };
+     }
+   }
+   ```
+
+2. **Discrepancy Categories**
+   - **Identical**: Exact match after normalization
+   - **Acceptable**: Different but clinically equivalent
+   - **Improvement**: New system fixes legacy bug
+   - **Regression**: New system introduces error
+
+### Safety Measures
+
+1. **Database Migration Safety**
+   - All migrations are reversible
+   - Dual-write during transition
+   - Backup before each migration
+   - Test rollback in staging
+
+2. **API Versioning**
+   - New endpoints under /v2/
+   - Legacy /v1/ endpoints maintained
+   - Deprecation warnings added
+   - 6-month transition period
+
+3. **Feature Flag Safety**
+   - Server-side control only
+   - Redis-backed for instant updates
+   - Audit log of all changes
+   - Automatic disable on error spike
+
+4. **Monitoring & Alerts**
+   - Real-time dashboard
+   - PagerDuty integration
+   - Slack notifications
+   - Automated rollback triggers
+
+### Communication Plan
+
+1. **Stakeholder Updates**
+   - Weekly progress emails
+   - Bi-weekly demo sessions
+   - Rollout notifications 48hrs in advance
+   - Post-mortem after completion
+
+2. **Team Coordination**
+   - Daily standups during development
+   - Twice-daily during rollout
+   - Dedicated Slack channel
+   - Escalation procedures documented
+
+---
+
 ## Risk Register
 
 ### High Priority Risks
@@ -577,6 +843,8 @@ if ((medication.doseForm === 'Vial' || medication.doseForm === 'Solution') &&
   return `${dose.value} ${dose.unit}, as ${mlValue} mL`;
 }
 ```
+
+**Note**: The current code has this backwards - it should show "0.2 mL, as 40 mg" not "40 mg, as 0.2 mL"
 
 **Output**: "Inject 0.2 mL, as 40 mg, intramuscularly three times weekly."
 
@@ -701,6 +969,7 @@ Using the same Testosterone Cypionate example:
 2. Both use "Inject" verb (from verbMappings)
 3. Route name ("intramuscularly" vs "subcutaneously") comes from routes data
 4. All calculations remain the same
+5. Clinical guardrails validate max volume per route (SubQ ≤ 1mL, IM ≤ 5mL)
 
 **Verb Mapping System:**
 ```typescript
@@ -712,6 +981,8 @@ export const verbMappings: VerbMapping[] = [
   { doseForm: "Tablet", route: "Sublingually", verb: "Place" },
 ];
 ```
+
+**Future Enhancement**: Move verb mapping to Route value object to eliminate brittle table
 
 ### Key Design Principles
 
