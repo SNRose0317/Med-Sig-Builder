@@ -55,6 +55,21 @@ The Medication Signature Builder is a React/TypeScript web application designed 
 - Database adapter for camelCase/snake_case conversion
 
 ## Recent Updates
+### Epic 1: Foundation & Core Contracts (2025-07-11) ✅
+- **Completed Tasks**:
+  - Task 1.1: Core Data Models (MedicationProfile, SignatureInstruction, MedicationRequestContext)
+  - Task 1.2: Architecture Patterns (ISignatureBuilder, Strategy Pattern, Functional Architecture)
+  - Task 1.3: Value Objects (Dose, Route, Frequency with branded types)
+  - Task 1.4: Clinical Guardrails Schema (YAML-based constraints with validation)
+  - Task 1.5: Guardrails Change Management Process (governance documentation)
+- **New Features**:
+  - Type-safe value objects with validation
+  - FHIR-compliant signature instructions
+  - Clinical guardrails system with two-sign-off workflow
+  - Comprehensive test coverage for new code
+  - Audit trail system for guardrail changes
+- **Status**: Ready for PR to simplify-refact branch
+
 ### Refactoring (Phase 1-4 Complete)
 - **Massive code reduction**: From 40+ files to 15 source files
 - **Consolidated components**: 16 components → 4 focused components
