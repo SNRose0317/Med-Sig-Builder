@@ -57,7 +57,7 @@ describe('Result Type', () => {
     });
 
     it('should pass through errors', () => {
-      const result = err<number, string>('error');
+      const result = err<string>('error');
       const mapped = map(result, (x: number) => x * 2);
       
       expect(isErr(mapped)).toBe(true);

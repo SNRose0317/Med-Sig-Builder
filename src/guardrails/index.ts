@@ -10,4 +10,5 @@
 export * from './types';
 
 // Export validator
-export { GuardrailsValidator, PatientContext, guardrailsValidator } from './validator';
+export { GuardrailsValidator, guardrailsValidator } from './validator';
+export type { PatientContext } from './validator';

@@ -175,7 +175,7 @@ describe('Strategy Pattern Types', () => {
     it('should modify instruction', () => {
       const foodModifier = new MockModifierStrategy(
         5,
-        (ctx) => ctx.specialInstructions?.includes('with food'),
+        (ctx) => ctx.specialInstructions?.includes('with food') || false,
         'with food'
       );
 

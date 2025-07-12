@@ -408,7 +408,9 @@ describe('Frequency Value Object', () => {
       
       const json = freq.toJSON();
       expect(json.type).toBe('prn');
-      expect(json.minInterval).toBe(6);
+      if (json.type === 'prn') {
+        expect(json.minInterval).toBe(6);
+      }
     });
 
     it('should deserialize from JSON', () => {

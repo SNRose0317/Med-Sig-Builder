@@ -29,9 +29,7 @@ describe('SignatureInstruction', () => {
         doseAndRate: [{
           doseQuantity: {
             value: 1,
-            unit: 'tablet',
-            system: 'http://unitsofmeasure.org',
-            code: 'TAB'
+            unit: 'tablet'
           }
         }]
       };
@@ -262,9 +260,7 @@ describe('SignatureInstruction', () => {
         doseAndRate: [{
           doseQuantity: {
             value: 500,
-            unit: 'mg',
-            system: 'http://unitsofmeasure.org',
-            code: 'mg'
+            unit: 'mg'
           }
         }]
       };

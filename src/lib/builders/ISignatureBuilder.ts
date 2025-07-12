@@ -234,7 +234,7 @@ export function isValidTimingInput(timing: any): timing is TimingInput {
   }
 
   if (timing.when !== undefined && 
-      (!Array.isArray(timing.when) || !timing.when.every(w => typeof w === 'string'))) {
+      (!Array.isArray(timing.when) || !timing.when.every((w: any) => typeof w === 'string'))) {
     return false;
   }
 

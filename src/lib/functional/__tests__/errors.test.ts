@@ -64,11 +64,11 @@ describe('Error Types', () => {
         const error = createDoseError(
           'exceeds_maximum',
           { value: 500, unit: 'mg' },
-          { maxDose: { value: 200, unit: 'mg' } }
+          { maxDosePerAdministration: { value: 200, unit: 'mg' } }
         );
         
         expect(error.constraints).toBeDefined();
-        expect(error.constraints?.maxDose).toEqual({ value: 200, unit: 'mg' });
+        expect(error.constraints?.maxDosePerAdministration).toEqual({ value: 200, unit: 'mg' });
       });
     });
 
