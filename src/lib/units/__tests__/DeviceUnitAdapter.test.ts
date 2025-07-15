@@ -5,7 +5,7 @@ import { DeviceUnitAdapter } from '../DeviceUnitAdapter';
 import { UCUMWrapper } from '../UCUMWrapper';
 import { MissingContextError } from '../ConversionErrors';
 import { DeviceUnit, ConversionContext } from '../types';
-import { Medication } from '../../../types';
+import { MedicationProfile } from '../../../types/MedicationProfile';
 
 describe('DeviceUnitAdapter', () => {
   let adapter: DeviceUnitAdapter;
@@ -147,7 +147,7 @@ describe('DeviceUnitAdapter', () => {
             },
             strengthQuantity: { value: 500, unit: 'mg' }
           }]
-        } as unknown as Medication
+        } as MedicationProfile
       };
       
       const result = adapter.convert(2, '{tablet}', 'mg', context);
@@ -170,7 +170,7 @@ describe('DeviceUnitAdapter', () => {
               denominator: { value: 1, unit: 'tablet' }
             }
           }]
-        } as unknown as Medication
+        } as MedicationProfile
       };
       
       const result = adapter.convert(3, '{tablet}', 'mg', context);
@@ -206,7 +206,7 @@ describe('DeviceUnitAdapter', () => {
               denominator: { value: 1, unit: 'capsule' }
             }
           }]
-        } as unknown as Medication
+        } as MedicationProfile
       };
       
       const result = adapter.convert(5, '{capsule}', 'mg', context);

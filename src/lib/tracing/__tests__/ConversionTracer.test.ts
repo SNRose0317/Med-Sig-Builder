@@ -200,13 +200,14 @@ describe('ConversionTracer', () => {
       tracer.trace({ type: 'conversion_start', description: 'Another fast op' });
       tracer.trace({ type: 'conversion_end', description: 'Another fast op' });
       
-      // For the slow operation, manipulate internal state to simulate slowness
+      // For the slow operation, we'll use a real delay to simulate slowness
       tracer.trace({ type: 'conversion_start', description: 'Slow op' });
       
-      // Manually add a large duration to operationTimings
-      const timings = (tracer as ConversionTracer & { operationTimings: Map<string, number[]> }).operationTimings;
-      const currentTimings = timings.get('Slow op') || [];
-      timings.set('Slow op', [...currentTimings, 1000]); // 1 second - definitely a bottleneck
+      // Create an actual delay to make this operation slow
+      const start = Date.now();
+      while (Date.now() - start < 100) {
+        // Busy wait for 100ms to simulate a slow operation
+      }
       
       tracer.trace({ type: 'conversion_end', description: 'Slow op' });
       
