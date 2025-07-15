@@ -1,0 +1,229 @@
+# Clinical Guardrails Schema for Medication Signature Builder
+# 
+# This schema defines clinical constraints and safety rules for medications.
+# All changes to this file must be reviewed by clinical staff and tracked in version control.
+#
+# @since 2.0.0
+
+# === Metadata ===
+version: "1.0.0"
+effective_date: "2024-01-01"
+approved_by:
+  - name: "Dr. Smith"
+    role: "Clinical Reviewer"
+    date: "2024-01-01"
+  - name: "PharmD Jones"
+    role: "Pharmacy Reviewer"
+    date: "2024-01-01"
+
+# === Medications ===
+# Medication-specific constraints including dose limits, contraindications, and special handling
+medications:
+  metformin:
+    brand_names: ["Glucophage", "Fortamet", "Glumetza"]
+    max_daily_dose:
+      value: 2000
+      unit: mg
+      populations:
+        - condition: "age < 18"
+          value: 1000
+          unit: mg
+          reason: "Pediatric dosing limit"
+        - condition: "egfr < 45 && egfr >= 30"
+          value: 1000
+          unit: mg
+          reason: "Moderate renal impairment"
+    max_single_dose:
+      value: 1000
+      unit: mg
+    contraindications:
+      - condition: "egfr < 30"
+        severity: absolute
+        message: "Contraindicated in severe renal impairment (eGFR < 30)"
+      - condition: "metabolic_acidosis"
+        severity: absolute
+        message: "Contraindicated in metabolic acidosis"
+    black_box_warnings:
+      - "Risk of lactic acidosis"
+    
+  testosterone_cypionate:
+    brand_names: ["Depo-Testosterone"]
+    dose_forms: ["Injectable Solution"]
+    max_single_dose:
+      value: 200
+      unit: mg
+    min_single_dose:
+      value: 50
+      unit: mg
+    dose_step:
+      value: 50
+      unit: mg
+    injection_sites: ["intramuscular"]
+    contraindications:
+      - condition: "prostate_cancer"
+        severity: absolute
+        message: "Contraindicated in known or suspected prostate cancer"
+      - condition: "pregnancy"
+        severity: absolute
+        message: "Contraindicated in pregnancy"
+    
+  ibuprofen:
+    brand_names: ["Advil", "Motrin"]
+    max_daily_dose:
+      value: 3200
+      unit: mg
+      populations:
+        - condition: "age < 12"
+          value: 40
+          unit: mg/kg
+          reason: "Pediatric weight-based dosing"
+        - condition: "age >= 65"
+          value: 2400
+          unit: mg
+          reason: "Geriatric dosing adjustment"
+    max_single_dose:
+      value: 800
+      unit: mg
+    contraindications:
+      - condition: "active_gi_bleed"
+        severity: absolute
+        message: "Contraindicated in active GI bleeding"
+      - condition: "severe_renal_impairment"
+        severity: relative
+        message: "Use with caution in severe renal impairment"
+
+# === Injection Constraints ===
+# Volume limits for different injection routes
+injection_constraints:
+  subcutaneous:
+    max_volume_per_site: 
+      value: 1.0
+      unit: mL
+    preferred_sites:
+      - abdomen
+      - thigh
+      - upper_arm
+    notes: "Rotate injection sites to prevent lipodystrophy"
+    
+  intramuscular:
+    max_volume_per_site:
+      default:
+        value: 5.0
+        unit: mL
+      sites:
+        deltoid:
+          value: 2.0
+          unit: mL
+        gluteal:
+          value: 5.0
+          unit: mL
+        vastus_lateralis:
+          value: 5.0
+          unit: mL
+    needle_lengths:
+      deltoid: "1-1.5 inch"
+      gluteal: "1.5-2 inch"
+      
+  intravenous:
+    requires_dilution: true
+    max_concentration:
+      default: "Refer to drug-specific guidelines"
+    
+# === Reconstitution Rules ===
+# Rules for reconstituting powder medications
+reconstitution_rules:
+  default_beyond_use_date: "1 hour at room temperature"
+  refrigerated_beyond_use_date: "24 hours"
+  
+  special_cases:
+    - medication: "ceftriaxone"
+      diluent: "lidocaine"
+      beyond_use_date: "immediate use"
+      notes: "For IM injection only when reconstituted with lidocaine"
+      
+    - medication: "ampicillin"
+      diluent: "sterile_water"
+      beyond_use_date: "1 hour at room temperature, 4 hours refrigerated"
+      concentration_limit:
+        value: 250
+        unit: mg/mL
+
+# === Special Handling ===
+# Special requirements for specific medications or situations
+special_handling:
+  hazardous_drugs:
+    - medication: "methotrexate"
+      precautions:
+        - "Use chemotherapy gloves"
+        - "Prepare in biological safety cabinet"
+        - "Double bag for disposal"
+      
+  light_sensitive:
+    - "nitroprusside"
+    - "furosemide"
+    
+  refrigeration_required:
+    - medication: "insulin"
+      storage: "2-8°C"
+      in_use_stability: "28 days at room temperature"
+      
+  do_not_shake:
+    - "insulin_glargine"
+    - "protein_medications"
+
+# === Fractional Dosing Rules ===
+# Rules for splitting tablets and other fractional dosing
+fractional_dosing:
+  tablet_splitting:
+    allowed_fractions: [0.5, 0.25]
+    not_allowed:
+      - "extended_release"
+      - "enteric_coated"
+      - "capsules"
+    
+  pediatric_rules:
+    min_tablet_fraction:
+      age_ranges:
+        - min_age: 0
+          max_age: 2
+          min_fraction: 0.25
+          reason: "Difficulty with smaller fractions in infants"
+        - min_age: 2
+          max_age: 6
+          min_fraction: 0.25
+        - min_age: 6
+          max_age: 12
+          min_fraction: 0.5
+
+# === Drug Interactions ===
+# Major drug-drug interactions that should trigger warnings
+drug_interactions:
+  - drugs: ["warfarin", "nsaids"]
+    severity: major
+    effect: "Increased bleeding risk"
+    recommendation: "Monitor INR closely if concurrent use necessary"
+    
+  - drugs: ["metformin", "contrast_media"]
+    severity: major
+    effect: "Risk of lactic acidosis"
+    recommendation: "Hold metformin 48 hours before and after contrast"
+    
+  - drugs: ["statins", "clarithromycin"]
+    severity: major
+    effect: "Increased risk of rhabdomyolysis"
+    recommendation: "Consider statin dose reduction or temporary discontinuation"
+
+# === Override Comments ===
+# Template for documenting clinical overrides
+override_template:
+  required_fields:
+    - reason
+    - prescriber
+    - date
+    - patient_specific_factors
+  example: |
+    Override: Exceeding max daily dose
+    Reason: Severe pain, failed standard dosing
+    Prescriber: Dr. Johnson
+    Date: 2024-01-15
+    Patient factors: Opioid tolerant, chronic pain patient
