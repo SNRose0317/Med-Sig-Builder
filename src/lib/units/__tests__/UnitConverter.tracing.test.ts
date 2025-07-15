@@ -139,7 +139,7 @@ describe('UnitConverter - Tracing Integration', () => {
       const trace = converter.exportTrace('json');
       const json = JSON.parse(trace);
       
-      const errorTrace = json.traces.find((t: any) => t.type === 'error');
+      const errorTrace = json.traces.find((t: { type: string }) => t.type === 'error');
       expect(errorTrace).toBeDefined();
       expect(errorTrace.data.errorType).toBe('MissingContextError');
     });
@@ -171,7 +171,7 @@ describe('UnitConverter - Tracing Integration', () => {
       const json = JSON.parse(trace);
       
       const confidenceTraces = json.traces.filter(
-        (t: any) => t.type === 'confidence_calculation'
+        (t: { type: string }) => t.type === 'confidence_calculation'
       );
       
       expect(confidenceTraces).toHaveLength(2); // start and end

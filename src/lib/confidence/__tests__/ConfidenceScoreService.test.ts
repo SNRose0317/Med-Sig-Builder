@@ -2,7 +2,7 @@
  * Tests for ConfidenceScoreService
  */
 import { ConfidenceScoreService } from '../ConfidenceScoreService';
-import { ConversionTrace, ConfidenceScore, ConfidenceLevel } from '../types';
+import { ConversionTrace, ConfidenceLevel } from '../types';
 import { ConversionStep } from '../../units/types';
 
 describe('ConfidenceScoreService', () => {
@@ -351,7 +351,7 @@ describe('ConfidenceScoreService', () => {
       };
       
       // Mock the score calculation
-      const mockCalculate = jest.spyOn(service as any, 'getBaseScore');
+      const mockCalculate = jest.spyOn(service as ConfidenceScoreService & { getBaseScore: () => number }, 'getBaseScore');
       mockCalculate.mockReturnValue(score);
       
       const result = service.calculate(trace);

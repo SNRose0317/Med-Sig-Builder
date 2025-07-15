@@ -69,12 +69,8 @@ describe('Golden Master Tests', () => {
   
   describe('Real-world medication scenarios', () => {
     it('should handle insulin conversions', () => {
-      const context: ConversionContext = {
-        strengthRatio: {
-          numerator: { value: 100, unit: 'units' },
-          denominator: { value: 1, unit: 'mL' }
-        }
-      };
+      // Insulin is typically 100 units/mL
+      // We'll register units as a device unit with this ratio
       
       // Common insulin doses
       const testCases = [

@@ -21,10 +21,7 @@ import { UCUMWrapper } from './UCUMWrapper';
 import { DeviceUnitAdapter } from './DeviceUnitAdapter';
 import {
   ConversionError,
-  ConversionErrors,
-  ImpossibleConversionError,
-  MissingContextError,
-  PrecisionError
+  ConversionErrors
 } from './ConversionErrors';
 import { ConfidenceScoreService } from '../confidence/ConfidenceScoreService';
 import { ConfidenceScore } from '../confidence/types';
@@ -292,7 +289,7 @@ export class UnitConverter implements IUnitConverter {
   validate(unit: string): UnitValidation {
     // Check device units first
     if (this.deviceAdapter.isDeviceUnit(unit)) {
-      const deviceUnit = this.deviceAdapter.getDeviceUnit(unit);
+      // Device unit exists
       return {
         valid: true,
         normalized: unit,

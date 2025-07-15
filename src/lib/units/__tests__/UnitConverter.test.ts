@@ -7,10 +7,9 @@ import {
   ConversionOptions,
   DeviceUnit 
 } from '../types';
+import { MedicationProfile } from '../../../types/MedicationProfile';
 import {
   InvalidUnitError,
-  MissingContextError,
-  PrecisionError,
   ImpossibleConversionError
 } from '../ConversionErrors';
 
@@ -332,7 +331,7 @@ describe('UnitConverter', () => {
               denominator: { value: 1, unit: 'tablet' }
             }
           }]
-        } as any
+        } as MedicationProfile
       };
       
       const result = converter.convert(2, '{tablet}', 'mg', context);

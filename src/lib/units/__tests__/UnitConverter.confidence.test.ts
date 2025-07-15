@@ -93,7 +93,7 @@ describe('UnitConverter - Confidence Score Integration', () => {
         }
       };
       
-      const result = converter.convert(2, '{tablet}', 'mg', context);
+      converter.convert(2, '{tablet}', 'mg', context);
       const explanation = converter.explain();
       
       expect(explanation).toContain('Confidence Score:');

@@ -15,9 +15,7 @@ import {
 } from './types';
 import {
   ConversionErrors,
-  MissingContextError,
-  InvalidUnitError,
-  ImpossibleConversionError
+  MissingContextError
 } from './ConversionErrors';
 
 /**

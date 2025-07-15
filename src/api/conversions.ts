@@ -8,6 +8,7 @@
 import { UnitConverter } from '../lib/units/UnitConverter';
 import { ConversionContext } from '../lib/units/types';
 import { ConversionTracer } from '../lib/tracing/ConversionTracer';
+import { ConfidenceScore } from '../lib/confidence/types';
 
 /**
  * API version for metadata
@@ -158,7 +159,9 @@ export async function calculateConfidence(
     );
     
     // Get confidence details
-    const lastConfidence = (converter as any).lastConfidenceScore;
+    // Type assertion needed because lastConfidenceScore is a private property
+    const converter_ = converter as unknown as { lastConfidenceScore?: ConfidenceScore };
+    const lastConfidence = converter_.lastConfidenceScore;
     
     // Build response
     const response: ConfidenceResponse = {
@@ -197,7 +200,7 @@ export async function calculateConfidence(
     
     // Add error details if available
     if (error instanceof Error && 'code' in error) {
-      errorResponse.details = { code: (error as any).code };
+      errorResponse.details = { code: (error as unknown as { code: string | number }).code };
     }
     
     return errorResponse;

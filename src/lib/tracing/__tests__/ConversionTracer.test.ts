@@ -76,7 +76,7 @@ describe('ConversionTracer', () => {
       });
       
       const json = JSON.parse(tracer.export('json'));
-      const endEvent = json.traces.find((t: any) => t.type === 'conversion_end');
+      const endEvent = json.traces.find((t: { type: string }) => t.type === 'conversion_end');
       expect(endEvent.duration).toBeGreaterThan(40);
       expect(endEvent.duration).toBeLessThan(100);
     });
@@ -201,11 +201,10 @@ describe('ConversionTracer', () => {
       tracer.trace({ type: 'conversion_end', description: 'Another fast op' });
       
       // For the slow operation, manipulate internal state to simulate slowness
-      const startTime = performance.now();
       tracer.trace({ type: 'conversion_start', description: 'Slow op' });
       
       // Manually add a large duration to operationTimings
-      const timings = (tracer as any).operationTimings;
+      const timings = (tracer as ConversionTracer & { operationTimings: Map<string, number[]> }).operationTimings;
       const currentTimings = timings.get('Slow op') || [];
       timings.set('Slow op', [...currentTimings, 1000]); // 1 second - definitely a bottleneck
       

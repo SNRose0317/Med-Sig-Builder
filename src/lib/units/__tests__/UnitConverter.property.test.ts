@@ -6,7 +6,6 @@
  */
 import fc from 'fast-check';
 import { UnitConverter } from '../UnitConverter';
-import { ConversionContext } from '../types';
 import {
   InvalidUnitError,
   ImpossibleConversionError,
