@@ -1,0 +1,189 @@
+[
+  {
+    "name": "@lhncbc/ucum-lhc",
+    "bundleSize": {
+      "raw": 2060000,
+      "dependencies": 1500000,
+      "total": 3560000
+    },
+    "performance": {
+      "avgConversionTime": 0.0030367200000000006,
+      "coldStartTime": 0.103208,
+      "memoryBaseline": 8.047012329101562,
+      "memoryPeak": 8.0684814453125
+    },
+    "accuracy": {
+      "passedTests": 2,
+      "failedTests": 23,
+      "roundTripError": 1,
+      "failedTestNames": [
+        "mg to g",
+        "g to mg",
+        "kg to g",
+        "mcg to mg",
+        "ug to mg",
+        "ng to mcg",
+        "pg to ng",
+        "mL to L",
+        "L to mL",
+        "uL to mL",
+        "dL to mL",
+        "mg/mL to g/L",
+        "g/L to mg/mL",
+        "Large ng to g",
+        "Large pg to mg",
+        "Small g to ng",
+        "Small L to uL",
+        "Scientific g to mg",
+        "Scientific mL to L",
+        "IU validation",
+        "Drops validation",
+        "Tablet validation",
+        "Capsule validation"
+      ]
+    },
+    "features": {
+      "ucumCompliant": false,
+      "customUnits": false,
+      "unitValidation": true,
+      "suggestions": false,
+      "commensurableUnits": true,
+      "errorMessages": "good"
+    },
+    "developerExperience": {
+      "typeSupport": "none",
+      "documentation": "comprehensive",
+      "apiDesign": "good",
+      "setupComplexity": "simple"
+    }
+  },
+  {
+    "name": "js-quantities",
+    "bundleSize": {
+      "raw": 45000,
+      "dependencies": 0,
+      "total": 45000
+    },
+    "performance": {
+      "avgConversionTime": 0.0352918,
+      "coldStartTime": 2.983458,
+      "memoryBaseline": 9.500900268554688,
+      "memoryPeak": 9.812568664550781
+    },
+    "accuracy": {
+      "passedTests": 21,
+      "failedTests": 4,
+      "roundTripError": 0,
+      "failedTestNames": [
+        "IU validation",
+        "Drops validation",
+        "Tablet validation",
+        "Capsule validation"
+      ]
+    },
+    "features": {
+      "ucumCompliant": true,
+      "customUnits": false,
+      "unitValidation": true,
+      "suggestions": false,
+      "commensurableUnits": true,
+      "errorMessages": "good"
+    },
+    "developerExperience": {
+      "typeSupport": "definitions",
+      "documentation": "adequate",
+      "apiDesign": "excellent",
+      "setupComplexity": "simple"
+    }
+  },
+  {
+    "name": "unitmath",
+    "bundleSize": {
+      "raw": 120000,
+      "dependencies": 50000,
+      "total": 170000
+    },
+    "performance": {
+      "avgConversionTime": 0.0251566,
+      "coldStartTime": 0.223959,
+      "memoryBaseline": 10.220634460449219,
+      "memoryPeak": 10.560569763183594
+    },
+    "accuracy": {
+      "passedTests": 19,
+      "failedTests": 6,
+      "roundTripError": 3.100550119680437e-17,
+      "failedTestNames": [
+        "mcg to mg",
+        "ng to mcg",
+        "IU validation",
+        "Drops validation",
+        "Tablet validation",
+        "Capsule validation"
+      ]
+    },
+    "features": {
+      "ucumCompliant": true,
+      "customUnits": false,
+      "unitValidation": true,
+      "suggestions": false,
+      "commensurableUnits": true,
+      "errorMessages": "good"
+    },
+    "developerExperience": {
+      "typeSupport": "native",
+      "documentation": "adequate",
+      "apiDesign": "excellent",
+      "setupComplexity": "moderate"
+    }
+  },
+  {
+    "name": "convert-units",
+    "bundleSize": {
+      "raw": 35000,
+      "dependencies": 10000,
+      "total": 45000
+    },
+    "performance": {
+      "avgConversionTime": 0.00251336,
+      "coldStartTime": 0.315417,
+      "memoryBaseline": 8.771347045898438,
+      "memoryPeak": 8.822265625
+    },
+    "accuracy": {
+      "passedTests": 11,
+      "failedTests": 14,
+      "roundTripError": 3.248195363474744e-17,
+      "failedTestNames": [
+        "ng to mcg",
+        "pg to ng",
+        "uL to mL",
+        "dL to mL",
+        "mg/mL to g/L",
+        "g/L to mg/mL",
+        "Large ng to g",
+        "Large pg to mg",
+        "Small g to ng",
+        "Small L to uL",
+        "IU validation",
+        "Drops validation",
+        "Tablet validation",
+        "Capsule validation"
+      ]
+    },
+    "features": {
+      "ucumCompliant": true,
+      "customUnits": false,
+      "unitValidation": true,
+      "suggestions": false,
+      "commensurableUnits": true,
+      "errorMessages": "good"
+    },
+    "developerExperience": {
+      "typeSupport": "definitions",
+      "documentation": "adequate",
+      "apiDesign": "good",
+      "setupComplexity": "simple"
+    }
+  }
+]
