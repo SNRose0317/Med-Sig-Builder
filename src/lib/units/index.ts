@@ -24,9 +24,9 @@ export {
   PrecisionError,
   ConversionErrors,
   // Result types
-  ConversionResult,
-  ErrorResult,
-  SuccessResult,
+  type ConversionResult,
+  type ErrorResult,
+  type SuccessResult,
   // Helper functions
   success,
   error,

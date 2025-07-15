@@ -9,7 +9,6 @@ import Qty from 'js-quantities';
 import { 
   IUCUMWrapper, 
   UnitValidation,
-  ConversionResult,
   ConversionSuccess
 } from './types';
 import {

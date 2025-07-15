@@ -32,10 +32,16 @@ describe('UnitConverter - Confidence Score Integration', () => {
         medication: {
           id: 'test-med',
           name: 'Test Med',
-          type: 'Medication',
+          type: 'medication',
+          isActive: true,
           doseForm: 'tablet',
+          code: { coding: [{ display: 'Test Med' }] },
           ingredient: [{
-            strengthQuantity: { value: 100, unit: 'mg' }
+            name: 'Test Ingredient',
+            strengthRatio: {
+              numerator: { value: 100, unit: 'mg' },
+              denominator: { value: 1, unit: 'tablet' }
+            }
           }]
         }
       };
@@ -73,10 +79,16 @@ describe('UnitConverter - Confidence Score Integration', () => {
         medication: {
           id: 'test-med',
           name: 'Test Med',
-          type: 'Medication',
+          type: 'medication',
+          isActive: true,
           doseForm: 'tablet',
+          code: { coding: [{ display: 'Test Med' }] },
           ingredient: [{
-            strengthQuantity: { value: 100, unit: 'mg' }
+            name: 'Test Ingredient',
+            strengthRatio: {
+              numerator: { value: 100, unit: 'mg' },
+              denominator: { value: 1, unit: 'tablet' }
+            }
           }]
         }
       };
@@ -95,9 +107,12 @@ describe('UnitConverter - Confidence Score Integration', () => {
         medication: {
           id: 'test-med',
           name: 'Test Med',
-          type: 'Medication',
+          type: 'medication',
+          isActive: true,
           doseForm: 'solution',
+          code: { coding: [{ display: 'Test Med' }] },
           ingredient: [{
+            name: 'Test Ingredient',
             strengthRatio: {
               numerator: { value: 50, unit: 'mg' },
               denominator: { value: 1, unit: 'mL' }
@@ -143,6 +158,7 @@ describe('UnitConverter - Confidence Score Integration', () => {
       converter.registerDeviceUnit({
         id: '{custom}',
         display: 'custom unit',
+        pluralDisplay: 'custom units',
         ratioTo: 'mL',
         factor: 5 // Default conversion factor
       });

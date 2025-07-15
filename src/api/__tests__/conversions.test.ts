@@ -95,10 +95,10 @@ describe('Conversions API', () => {
     
     it('should return error for invalid request', async () => {
       const request = {
-        value: 'invalid',
+        value: 'invalid' as unknown as number,
         fromUnit: 'mg',
         toUnit: 'g'
-      } as any;
+      };
       
       const response = await calculateConfidence(request);
       

@@ -158,7 +158,6 @@ export async function calculateConfidence(
     );
     
     // Get confidence details
-    const confidenceExplanation = converter.explain();
     const lastConfidence = (converter as any).lastConfidenceScore;
     
     // Build response
@@ -217,7 +216,7 @@ export interface ValidateUnitsResponse {
     unit: string;
     valid: boolean;
     normalized?: string;
-    type?: 'standard' | 'device' | 'custom';
+    type?: 'standard' | 'device' | 'compound';
     error?: string;
     suggestions?: string[];
   }>;

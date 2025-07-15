@@ -202,7 +202,7 @@ describe('UnitConverter Property Tests', () => {
         fc.property(
           fc.oneof(
             fc.constantFrom('mg', 'g', 'mL', 'L', 'mcg', 'kg', '{tablet}', '{click}'),
-            fc.string({ minLength: 1, maxLength: 10 }).filter(s => s.match(/^[a-zA-Z{}]+$/))
+            fc.string({ minLength: 1, maxLength: 10 }).filter(s => /^[a-zA-Z{}]+$/.test(s))
           ),
           (unitString) => {
             const validation1 = converter.validate(unitString);
@@ -225,8 +225,8 @@ describe('UnitConverter Property Tests', () => {
         fc.property(
           fc.float({ min: 1, max: 100, noNaN: true }),
           fc.string({ minLength: 5, maxLength: 10 }).filter(s => 
-            !s.match(/^(mg|g|mL|L|mcg|kg|μL|dL|\{[^}]+\})$/) && 
-            s.match(/^[a-zA-Z]+$/)
+            !/^(mg|g|mL|L|mcg|kg|μL|dL|\{[^}]+\})$/.test(s) && 
+            /^[a-zA-Z]+$/.test(s)
           ),
           fc.constantFrom('mg', 'g', 'mL'),
           (value, invalidUnit, validUnit) => {

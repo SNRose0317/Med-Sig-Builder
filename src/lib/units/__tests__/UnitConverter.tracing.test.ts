@@ -151,10 +151,16 @@ describe('UnitConverter - Tracing Integration', () => {
         medication: {
           id: 'test',
           name: 'Test Med',
-          type: 'Medication',
+          type: 'medication',
+          isActive: true,
           doseForm: 'tablet',
+          code: { coding: [{ display: 'Test Med' }] },
           ingredient: [{
-            strengthQuantity: { value: 100, unit: 'mg' }
+            name: 'Test Ingredient',
+            strengthRatio: {
+              numerator: { value: 100, unit: 'mg' },
+              denominator: { value: 1, unit: 'tablet' }
+            }
           }]
         }
       };
