@@ -231,7 +231,7 @@ export function generateSignature(
   const doseText = formatDose(dose, medication);
   
   // Build the signature
-  let parts = [
+  const parts = [
     verb,
     doseText,
     routeInfo.humanReadable,

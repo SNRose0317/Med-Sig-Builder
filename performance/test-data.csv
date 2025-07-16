@@ -1,0 +1,41 @@
+medicationId,doseValue,doseUnit,route,frequency
+metformin-500,1,tablet,by mouth,twice daily
+metformin-500,2,tablet,by mouth,twice daily
+lisinopril-10,0.5,tablet,by mouth,once daily
+lisinopril-10,1,tablet,by mouth,once daily
+levothyroxine-25,1,tablet,by mouth,once daily
+omeprazole-20,1,capsule,by mouth,once daily
+amoxicillin-susp,5,mL,by mouth,three times daily
+amoxicillin-susp,250,mg,by mouth,twice daily
+acetaminophen-sol,2.5,mL,by mouth,every 4 hours as needed
+insulin-glargine,10,units,subcutaneously,once daily
+testosterone-cyp,100,mg,intramuscularly,once weekly
+testosterone-cyp,200,mg,intramuscularly,every 2 weeks
+morphine-inj,5,mg,intramuscularly,every 4 hours as needed
+estradiol-cream,4,click,topically,twice daily
+estradiol-cream,8,click,topically,once daily
+hydrocortisone-cream,1,application,topically,twice daily
+prednisone-10,4,tablet,by mouth,once daily
+prednisone-10,2,tablet,by mouth,once daily
+gabapentin-300,1,tablet,by mouth,three times daily
+sertraline-50,1,tablet,by mouth,once daily
+methadone-10,5,tablet,by mouth,once daily
+chlordiazepoxide-25,2,tablet,by mouth,four times daily
+sumatriptan-100,1,tablet,by mouth,as needed
+oxycodone-5,1,tablet,by mouth,every 4-6 hours as needed
+lorazepam-1,0.5,tablet,by mouth,as needed
+zolpidem-10,1,tablet,by mouth,at bedtime as needed
+combination-hormone,6,click,topically,once daily
+combination-tablet,1,tablet,by mouth,once daily
+triple-topical,2,click,topically,twice daily
+injectable-compound,1,mL,intramuscularly,once weekly
+sublingual-compound,1,tablet,sublingually,twice daily
+vitamin-d-50000,50000,IU,by mouth,once weekly
+digoxin-pediatric,0.05,mL,by mouth,twice daily
+high-dose-metformin,3,tablet,by mouth,twice daily
+fractional-dose,1.5,tablet,by mouth,once daily
+very-low-dose,0.25,tablet,by mouth,once daily
+liquid-high-conc,0.1,mL,by mouth,once daily
+injection-small,0.25,mL,intramuscularly,once weekly
+topical-large,12,click,topically,once daily
+multi-freq,1,tablet,by mouth,every 8 hours

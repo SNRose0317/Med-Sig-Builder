@@ -94,8 +94,8 @@ export class TopiclickModifier implements IModifierStrategyWithMetadata {
     return {
       ...instruction,
       text: modifiedText,
-      additionalInstruction: [
-        ...(instruction.additionalInstruction || []),
+      additionalInstructions: [
+        ...(instruction.additionalInstructions || []),
         {
           text: 'Each click dispenses 0.25 mL'
         }

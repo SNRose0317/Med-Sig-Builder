@@ -1,5 +1,10 @@
 import type { Medication } from '../types/index';
-import { getFrequency } from '../constants/medication-data';
+import { getFrequency, type Frequency } from '../constants/medication-data';
+import { 
+  calculateDaysSupply as calculateDaysSupplyStrategy,
+  createDaysSupplyContext,
+  isValidDaysSupplyContext
+} from './strategies/days-supply/index';
 
 export interface DoseInfo {
   value: number;
@@ -10,8 +15,105 @@ export interface DoseInfo {
 /**
  * Calculates days supply for a medication
  * Returns null if calculation not possible (e.g., PRN medications)
+ * 
+ * @deprecated Consider using the new strategy-based calculation system directly
  */
 export function calculateDaysSupply(
+  medication: Medication,
+  dose: DoseInfo
+): number | null {
+  try {
+    // Convert legacy format to new strategy context
+    const context = convertToStrategyContext(medication, dose);
+    
+    if (!isValidDaysSupplyContext(context)) {
+      return null;
+    }
+
+    // Use new strategy-based calculation
+    const result = calculateDaysSupplyStrategy(context);
+    
+    // Return null for PRN medications (days supply = 0)
+    return result.daysSupply === 0 ? null : result.daysSupply;
+
+  } catch (error) {
+    // Fallback to legacy calculation for compatibility
+    return calculateDaysSupplyLegacy(medication, dose);
+  }
+}
+
+/**
+ * Convert legacy medication/dose format to new strategy context
+ */
+function convertToStrategyContext(medication: Medication, dose: DoseInfo): import('./strategies/days-supply/index').DaysSupplyContext {
+  if (!medication.packageInfo) {
+    throw new Error('No package info available');
+  }
+
+  const frequency = getFrequency(dose.frequencyKey);
+  if (!frequency) {
+    throw new Error('Invalid frequency');
+  }
+
+  // Convert frequency to timing string
+  const timing = convertFrequencyToTiming(frequency);
+  
+  return createDaysSupplyContext(
+    medication.packageInfo.quantity,
+    medication.packageInfo.unit,
+    dose.value,
+    dose.unit,
+    timing,
+    {
+      doseForm: medication.doseForm || medication.type,
+      ingredient: medication.ingredient,
+      dispenserInfo: medication.dispenserInfo ? {
+        conversionRatio: medication.dispenserInfo.conversionRatio,
+        unit: medication.dispenserInfo.unit
+      } : undefined
+    }
+  );
+}
+
+/**
+ * Convert frequency object to timing string
+ */
+function convertFrequencyToTiming(frequency: Frequency): string {
+  if (!frequency.count || !frequency.periodUnit) {
+    return 'as needed';
+  }
+
+  const count = frequency.count;
+  const period = frequency.period || 1;
+  const periodUnit = frequency.periodUnit;
+
+  // Handle common patterns
+  if (periodUnit === 'd' && period === 1) {
+    if (count === 1) return 'once daily';
+    if (count === 2) return 'twice daily';
+    if (count === 3) return 'three times daily';
+    if (count === 4) return 'four times daily';
+    return `${count} times daily`;
+  }
+
+  if (periodUnit === 'wk' && period === 1) {
+    if (count === 1) return 'once weekly';
+    return `${count} times weekly`;
+  }
+
+  if (periodUnit === 'mo' && period === 1) {
+    if (count === 1) return 'once monthly';
+    return `${count} times monthly`;
+  }
+
+  // Default fallback
+  return `${count} times per ${period} ${periodUnit}`;
+}
+
+/**
+ * Legacy calculation as fallback
+ */
+function calculateDaysSupplyLegacy(
   medication: Medication,
   dose: DoseInfo
 ): number | null {
@@ -73,7 +175,7 @@ export function calculateDaysSupply(
 /**
  * Calculates doses per day from frequency
  */
-function calculateDosesPerDay(frequency: any): number {
+function calculateDosesPerDay(frequency: Frequency): number {
   if (!frequency.count || !frequency.periodUnit) {
     return 0;
   }
@@ -179,3 +281,16 @@ export function getDoseConstraintMessage(
 
   return null;
 }
+
+/**
+ * New strategy-based days supply calculation exports
+ * Use these for new implementations that support titration and advanced features
+ */
+export {
+  calculateDaysSupply as calculateDaysSupplyStrategy,
+  createDaysSupplyContext,
+  quickDaysSupplyCalculation,
+  isValidDaysSupplyContext,
+  DaysSupplyStrategyDispatcher,
+  getStrategyInfo
+} from './strategies/days-supply/index';

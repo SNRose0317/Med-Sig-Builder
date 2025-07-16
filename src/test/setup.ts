@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import { clinicalMatchers } from './matchers/clinical-matchers';
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
@@ -14,3 +15,6 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: jest.fn(),
   })),
 });
+
+// Register custom matchers for clinical comparison
+expect.extend(clinicalMatchers);

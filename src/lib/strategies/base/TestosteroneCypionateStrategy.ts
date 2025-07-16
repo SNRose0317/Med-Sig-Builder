@@ -10,16 +10,19 @@
 import { IBaseStrategyWithMetadata, SpecificityLevel } from '../types';
 import { MedicationRequestContext } from '../../../types/MedicationRequestContext';
 import { SignatureInstruction } from '../../../types/SignatureInstruction';
+import { createTemplateEngine } from '../../templates/templates';
+import { TemplateDataBuilder } from '../../templates/TemplateDataBuilder';
 
 export class TestosteroneCypionateStrategy implements IBaseStrategyWithMetadata {
   readonly specificity = SpecificityLevel.MEDICATION_ID;
+  private templateEngine = createTemplateEngine();
   
   readonly metadata = {
     id: 'testosterone-cypionate-strategy',
     name: 'Testosterone Cypionate Strategy',
-    description: 'Handles testosterone cypionate with dual dosing display',
+    description: 'Handles testosterone cypionate with dual dosing display using template engine',
     examples: ['Testosterone Cypionate 200mg/mL'],
-    version: '1.0.0'
+    version: '2.0.0'
   };
 
   /**
@@ -35,41 +38,16 @@ export class TestosteroneCypionateStrategy implements IBaseStrategyWithMetadata 
   }
 
   /**
-   * Builds instruction with dual dosing for testosterone
+   * Builds instruction with dual dosing for testosterone using template engine
    */
   buildInstruction(context: MedicationRequestContext): SignatureInstruction {
-    const { medication, dose, route, frequency } = context;
+    const { dose, frequency } = context;
     
-    // Calculate volume from mg dose if needed
-    let doseText = '';
-    if (dose) {
-      if (dose.unit === 'mg') {
-        // Assume 200mg/mL concentration (standard)
-        const mlValue = (dose.value / 200).toFixed(2);
-        doseText = `${dose.value} mg, as ${mlValue} mL`;
-      } else if (dose.unit === 'mL') {
-        const mgValue = dose.value * 200;
-        doseText = `${mgValue} mg, as ${dose.value} mL`;
-      } else {
-        doseText = `${dose.value} ${dose.unit}`;
-      }
-    }
+    // Build template data with testosterone-specific dual dosing logic
+    const templateData = TemplateDataBuilder.forTestosteroneCypionate(context);
     
-    // Build instruction text
-    const parts: string[] = ['Inject', doseText];
-    
-    // Route is always intramuscular for testosterone cypionate
-    parts.push('intramuscularly');
-    
-    // Add injection site rotation instruction
-    parts.push('(rotate injection sites)');
-    
-    // Add frequency - convert to lowercase
-    if (frequency) {
-      parts.push(frequency.toLowerCase());
-    }
-    
-    const text = parts.filter(Boolean).join(' ') + '.';
+    // Render text using template engine
+    const text = this.templateEngine.render('INJECTION_TEMPLATE', templateData);
     
     // Build FHIR-compliant instruction
     return {
@@ -85,9 +63,7 @@ export class TestosteroneCypionateStrategy implements IBaseStrategyWithMetadata 
         },
         doseQuantity: {
           value: dose.value,
-          unit: dose.unit,
-          system: 'http://unitsofmeasure.org',
-          code: dose.unit
+          unit: dose.unit
         }
       }] : undefined,
       route: {
@@ -111,7 +87,7 @@ export class TestosteroneCypionateStrategy implements IBaseStrategyWithMetadata 
           display: 'Inject'
         }]
       },
-      additionalInstruction: [{
+      additionalInstructions: [{
         coding: [{
           system: 'http://snomed.info/sct',
           code: '421769005',
@@ -126,7 +102,7 @@ export class TestosteroneCypionateStrategy implements IBaseStrategyWithMetadata 
    * Explains the strategy's behavior
    */
   explain(): string {
-    return 'Testosterone cypionate strategy: Provides dual dosing (mg/mL), enforces IM route, and includes injection site rotation';
+    return 'Testosterone cypionate strategy: Uses template engine for internationalization-ready instructions with dual dosing (mg/mL), enforces IM route, and includes injection site rotation';
   }
 
   /**
@@ -136,7 +112,7 @@ export class TestosteroneCypionateStrategy implements IBaseStrategyWithMetadata 
     if (!frequency) return undefined;
 
     // Common testosterone injection frequencies
-    const timingMap: Record<string, any> = {
+    const timingMap: Record<string, { repeat: { frequency: number; period: number; periodUnit: string; when?: string[] } }> = {
       'Once Weekly': {
         repeat: {
           frequency: 1,

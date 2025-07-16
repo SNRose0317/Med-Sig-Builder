@@ -19,8 +19,8 @@ import {
   StrengthDisplayModifier
 } from '../../strategies/modifiers';
 import { MedicationRequestContext } from '../../../types/MedicationRequestContext';
-import { generateSignature as oldGenerateSignature } from '../../signature';
-import { Medication } from '../../../types';
+// import { generateSignature as oldGenerateSignature } from '../../signature'; // Not used in current benchmarks
+// import { Medication } from '../../../types'; // Not used in current benchmarks
 import { SpecificityLevel } from '../../strategies/types';
 
 // Helper to measure execution time
@@ -58,11 +58,18 @@ describe('Performance Benchmarks', () => {
   // Test contexts
   const contexts: Array<[string, MedicationRequestContext]> = [
     ['Simple tablet', {
+      id: 'test-1',
+      timestamp: new Date().toISOString(),
+      patient: { id: 'test-patient', age: 30 },
       medication: {
         id: 'metformin-500',
         name: 'Metformin 500mg',
+        type: 'medication',
+        isActive: true,
         doseForm: 'Tablet',
+        code: { coding: [{ display: 'Metformin' }] },
         ingredient: [{
+          name: 'Metformin',
           strengthRatio: {
             numerator: { value: 500, unit: 'mg' },
             denominator: { value: 1, unit: 'tablet' }
@@ -74,11 +81,18 @@ describe('Performance Benchmarks', () => {
       frequency: 'Twice Daily'
     }],
     ['Liquid medication', {
+      id: 'test-2',
+      timestamp: new Date().toISOString(),
+      patient: { id: 'test-patient', age: 30 },
       medication: {
         id: 'amox-susp',
         name: 'Amoxicillin Suspension',
+        type: 'medication',
+        isActive: true,
         doseForm: 'Suspension',
+        code: { coding: [{ display: 'Amoxicillin' }] },
         ingredient: [{
+          name: 'Amoxicillin',
           strengthRatio: {
             numerator: { value: 250, unit: 'mg' },
             denominator: { value: 5, unit: 'mL' }
@@ -90,11 +104,18 @@ describe('Performance Benchmarks', () => {
       frequency: 'Three Times Daily'
     }],
     ['Testosterone injection', {
+      id: 'test-3',
+      timestamp: new Date().toISOString(),
+      patient: { id: 'test-patient', age: 30 },
       medication: {
         id: 'testosterone-cypionate-200mg-ml',
         name: 'Testosterone Cypionate 200mg/mL',
+        type: 'medication',
+        isActive: true,
         doseForm: 'Vial',
+        code: { coding: [{ display: 'Testosterone Cypionate' }] },
         ingredient: [{
+          name: 'Testosterone Cypionate',
           strengthRatio: {
             numerator: { value: 200, unit: 'mg' },
             denominator: { value: 1, unit: 'mL' }
@@ -106,12 +127,19 @@ describe('Performance Benchmarks', () => {
       frequency: 'Once Weekly'
     }],
     ['Topiclick cream', {
+      id: 'test-4',
+      timestamp: new Date().toISOString(),
+      patient: { id: 'test-patient', age: 30 },
       medication: {
         id: 'estradiol-cream',
         name: 'Estradiol Cream',
+        type: 'medication',
+        isActive: true,
         doseForm: 'Cream',
-        dispenserInfo: { type: 'Topiclick' },
+        code: { coding: [{ display: 'Estradiol' }] },
+        dispenserInfo: { type: 'Topiclick', unit: 'click', pluralUnit: 'clicks', conversionRatio: 4 },
         ingredient: [{
+          name: 'Estradiol',
           strengthRatio: {
             numerator: { value: 10, unit: 'mg' },
             denominator: { value: 1, unit: 'g' }
@@ -147,19 +175,8 @@ describe('Performance Benchmarks', () => {
       const overheads: number[] = [];
       
       contexts.forEach(([name, context]) => {
-        // Convert to old API format for comparison
-        const medication: Medication = {
-          id: context.medication!.id!,
-          name: context.medication!.name!,
-          type: 'prescription',
-          doseForm: context.medication!.doseForm!,
-          code: context.medication!.code,
-          ingredient: context.medication!.ingredient,
-          isActive: true,
-          packageInfo: context.medication!.packageInfo,
-          dispenserInfo: context.medication!.dispenserInfo,
-          dosageConstraints: {}
-        };
+        // Note: Previously converted to old API format for comparison
+        // but comparison is no longer needed due to API changes
         
         // Warm up new implementation
         for (let i = 0; i < 10; i++) {
@@ -168,7 +185,6 @@ describe('Performance Benchmarks', () => {
         
         // Skip old implementation test for incompatible routes
         // Just measure new implementation performance
-        const oldTimes: number[] = [];
         
         // Measure new implementation
         const newTimes: number[] = [];
@@ -264,7 +280,7 @@ describe('Performance Benchmarks', () => {
         const modifier = {
           priority: 100 + i, // Unique priority
           appliesTo: () => false, // Never applies
-          modify: (instruction: any) => instruction,
+          modify: (instruction: { text: string }) => instruction,
           explain: () => 'Mock modifier'
         };
         bigRegistry.registerModifier(`mod-${i}`, modifier);

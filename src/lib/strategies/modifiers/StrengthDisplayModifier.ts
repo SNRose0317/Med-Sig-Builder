@@ -40,7 +40,7 @@ export class StrengthDisplayModifier implements IModifierStrategyWithMetadata {
     // Don't apply if strength is already in the text
     const doseIsStrength = ['mg', 'mcg', 'g'].includes(dose.unit.toLowerCase());
     
-    return hasCountableUnit && hasStrength && !doseIsStrength;
+    return hasCountableUnit && !!hasStrength && !doseIsStrength;
   }
 
   /**

@@ -1,0 +1,347 @@
+# Continuous Performance Monitoring Workflow
+# SNR-126: GitHub Actions Integration - Monitoring Component
+# Provides ongoing performance tracking and alerting
+
+name: Performance Monitoring
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to monitor'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      duration:
+        description: 'Monitoring duration (minutes)'
+        required: false
+        default: '10'
+        type: string
+
+env:
+  MONITORING_DURATION: ${{ github.event.inputs.duration || '10' }}
+  ALERT_THRESHOLD_P95: 100  # Higher threshold for monitoring
+  ALERT_THRESHOLD_P99: 200
+
+jobs:
+  continuous-monitoring:
+    name: Continuous Performance Monitoring
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Artillery
+        run: npm install -g artillery@latest
+
+      - name: Set monitoring target
+        run: |
+          case "${{ github.event.inputs.environment || 'staging' }}" in
+            "production")
+              echo "TARGET_URL=${{ secrets.PRODUCTION_URL }}" >> $GITHUB_ENV
+              echo "ENVIRONMENT=production" >> $GITHUB_ENV
+              ;;
+            "staging")
+              echo "TARGET_URL=${{ secrets.STAGING_URL }}" >> $GITHUB_ENV
+              echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+              ;;
+            *)
+              echo "TARGET_URL=https://demo.med-sig-builder.com" >> $GITHUB_ENV
+              echo "ENVIRONMENT=demo" >> $GITHUB_ENV
+              ;;
+          esac
+
+      - name: Create monitoring configuration
+        run: |
+          cat > monitoring-config.yml << EOF
+          config:
+            target: '${{ env.TARGET_URL }}'
+            phases:
+              - duration: ${{ env.MONITORING_DURATION }}
+                arrivalRate: 5
+                name: "Continuous monitoring"
+            ensure:
+              - http.response_time.p95: ${{ env.ALERT_THRESHOLD_P95 }}
+              - http.response_time.p99: ${{ env.ALERT_THRESHOLD_P99 }}
+              - http.codes.200: 95
+            plugins:
+              expect: {}
+
+          scenarios:
+            - name: "Health Check Monitoring"
+              weight: 40
+              flow:
+                - get:
+                    url: "/api/health"
+                    expect:
+                      - statusCode: 200
+                      - responseTime: 1000
+
+            - name: "Basic Dispatch Monitoring" 
+              weight: 40
+              flow:
+                - post:
+                    url: "/api/signature/dispatch"
+                    json:
+                      id: "monitor-{{ \$randomNumber() }}"
+                      timestamp: "{{ \$isoTimestamp() }}"
+                      patient:
+                        id: "monitor-patient"
+                        age: 35
+                      medication:
+                        id: "monitor-med"
+                        name: "Monitoring Medication"
+                        type: "medication"
+                        isActive: true
+                        doseForm: "Tablet"
+                        code:
+                          coding:
+                            - display: "Monitor Med"
+                        ingredient:
+                          - name: "Monitor Ingredient"
+                            strengthRatio:
+                              numerator:
+                                value: 500
+                                unit: "mg"
+                              denominator:
+                                value: 1
+                                unit: "tablet"
+                      dose:
+                        value: 1
+                        unit: "tablet"
+                      route: "by mouth"
+                      frequency: "twice daily"
+                    expect:
+                      - statusCode: 200
+                      - responseTime: 2000
+
+            - name: "Memory Usage Check"
+              weight: 20
+              flow:
+                - get:
+                    url: "/api/health/memory"
+                    expect:
+                      - statusCode: 200
+          EOF
+
+      - name: Run performance monitoring
+        id: monitoring
+        run: |
+          echo "Starting performance monitoring for ${{ env.ENVIRONMENT }}..."
+          artillery run monitoring-config.yml --output monitoring-results.json
+          echo "monitoring_exit_code=$?" >> $GITHUB_OUTPUT
+
+      - name: Generate monitoring report
+        run: |
+          artillery report monitoring-results.json --output monitoring-report.html
+
+      - name: Analyze monitoring results
+        id: analysis
+        run: |
+          # Extract key metrics
+          RESULTS_FILE="monitoring-results.json"
+          
+          if [ -f "$RESULTS_FILE" ]; then
+            P50=$(jq -r '.aggregate.latency.p50' "$RESULTS_FILE")
+            P95=$(jq -r '.aggregate.latency.p95' "$RESULTS_FILE")
+            P99=$(jq -r '.aggregate.latency.p99' "$RESULTS_FILE")
+            RPS=$(jq -r '.aggregate.rps.mean' "$RESULTS_FILE")
+            ERRORS=$(jq -r '.aggregate.errors' "$RESULTS_FILE")
+            SUCCESS_RATE=$(jq -r '.aggregate.codes."200" // 0' "$RESULTS_FILE")
+            
+            echo "Performance Monitoring Results for ${{ env.ENVIRONMENT }}:"
+            echo "P50: ${P50}ms"
+            echo "P95: ${P95}ms"
+            echo "P99: ${P99}ms"
+            echo "RPS: ${RPS}"
+            echo "Errors: ${ERRORS}"
+            echo "Success Rate: ${SUCCESS_RATE}%"
+            
+            # Store results for alerting
+            echo "p50=$P50" >> $GITHUB_OUTPUT
+            echo "p95=$P95" >> $GITHUB_OUTPUT
+            echo "p99=$P99" >> $GITHUB_OUTPUT
+            echo "rps=$RPS" >> $GITHUB_OUTPUT
+            echo "errors=$ERRORS" >> $GITHUB_OUTPUT
+            echo "success_rate=$SUCCESS_RATE" >> $GITHUB_OUTPUT
+            
+            # Determine alert status
+            ALERT_NEEDED="false"
+            if (( $(echo "$P95 > ${{ env.ALERT_THRESHOLD_P95 }}" | bc -l) )); then
+              ALERT_NEEDED="true"
+              echo "⚠️ P95 latency alert: ${P95}ms > ${{ env.ALERT_THRESHOLD_P95 }}ms"
+            fi
+            
+            if (( $(echo "$P99 > ${{ env.ALERT_THRESHOLD_P99 }}" | bc -l) )); then
+              ALERT_NEEDED="true"
+              echo "⚠️ P99 latency alert: ${P99}ms > ${{ env.ALERT_THRESHOLD_P99 }}ms"
+            fi
+            
+            if (( $(echo "$SUCCESS_RATE < 95" | bc -l) )); then
+              ALERT_NEEDED="true"
+              echo "⚠️ Success rate alert: ${SUCCESS_RATE}% < 95%"
+            fi
+            
+            echo "alert_needed=$ALERT_NEEDED" >> $GITHUB_OUTPUT
+          else
+            echo "No monitoring results file found"
+            echo "alert_needed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload monitoring results
+        uses: actions/upload-artifact@v3
+        with:
+          name: monitoring-results-${{ env.ENVIRONMENT }}-${{ github.run_number }}
+          path: |
+            monitoring-results.json
+            monitoring-report.html
+
+      - name: Store monitoring history
+        run: |
+          # Create monitoring history entry
+          mkdir -p .monitoring-history/${{ env.ENVIRONMENT }}
+          TIMESTAMP=$(date -Iseconds)
+          
+          cat > .monitoring-history/${{ env.ENVIRONMENT }}/$(date +%Y-%m-%d-%H-%M).json << EOF
+          {
+            "timestamp": "$TIMESTAMP",
+            "environment": "${{ env.ENVIRONMENT }}",
+            "commit": "${{ github.sha }}",
+            "run_number": ${{ github.run_number }},
+            "metrics": {
+              "p50": ${{ steps.analysis.outputs.p50 }},
+              "p95": ${{ steps.analysis.outputs.p95 }},
+              "p99": ${{ steps.analysis.outputs.p99 }},
+              "rps": ${{ steps.analysis.outputs.rps }},
+              "errors": ${{ steps.analysis.outputs.errors }},
+              "success_rate": ${{ steps.analysis.outputs.success_rate }}
+            },
+            "alert_triggered": ${{ steps.analysis.outputs.alert_needed }}
+          }
+          EOF
+
+      - name: Upload monitoring history
+        uses: actions/upload-artifact@v3
+        with:
+          name: monitoring-history-${{ env.ENVIRONMENT }}
+          path: .monitoring-history/
+
+      - name: Send Slack alert
+        if: steps.analysis.outputs.alert_needed == 'true' && env.ENVIRONMENT == 'production'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          channel: '#alerts-performance'
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+          custom_payload: |
+            {
+              "text": "🚨 Performance Alert - ${{ env.ENVIRONMENT }}",
+              "attachments": [
+                {
+                  "color": "danger",
+                  "fields": [
+                    {
+                      "title": "Environment",
+                      "value": "${{ env.ENVIRONMENT }}",
+                      "short": true
+                    },
+                    {
+                      "title": "P95 Latency",
+                      "value": "${{ steps.analysis.outputs.p95 }}ms",
+                      "short": true
+                    },
+                    {
+                      "title": "P99 Latency", 
+                      "value": "${{ steps.analysis.outputs.p99 }}ms",
+                      "short": true
+                    },
+                    {
+                      "title": "Success Rate",
+                      "value": "${{ steps.analysis.outputs.success_rate }}%",
+                      "short": true
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Create GitHub issue for performance degradation
+        if: steps.analysis.outputs.alert_needed == 'true' && env.ENVIRONMENT == 'production'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const title = `🚨 Performance Degradation Detected - ${process.env.ENVIRONMENT}`;
+            
+            const body = `
+            ## Performance Alert
+            
+            Performance monitoring has detected degradation in the **${process.env.ENVIRONMENT}** environment.
+            
+            ### Metrics
+            - **P50 Latency**: ${{ steps.analysis.outputs.p50 }}ms
+            - **P95 Latency**: ${{ steps.analysis.outputs.p95 }}ms (Threshold: ${{ env.ALERT_THRESHOLD_P95 }}ms)
+            - **P99 Latency**: ${{ steps.analysis.outputs.p99 }}ms (Threshold: ${{ env.ALERT_THRESHOLD_P99 }}ms)
+            - **Success Rate**: ${{ steps.analysis.outputs.success_rate }}%
+            - **Throughput**: ${{ steps.analysis.outputs.rps }} ops/sec
+            - **Errors**: ${{ steps.analysis.outputs.errors }}
+            
+            ### Investigation Steps
+            - [ ] Check server resources (CPU, memory, disk)
+            - [ ] Review application logs for errors
+            - [ ] Analyze database performance
+            - [ ] Check network latency
+            - [ ] Review recent deployments
+            
+            ### Monitoring Report
+            See [monitoring report](https://github.com/${owner}/${repo}/actions/runs/${{ github.run_id }}) for detailed analysis.
+            
+            **Environment**: ${process.env.ENVIRONMENT}
+            **Timestamp**: $(date -Iseconds)
+            **Commit**: ${{ github.sha }}
+            `;
+            
+            await github.rest.issues.create({
+              owner,
+              repo,
+              title,
+              body,
+              labels: ['performance', 'alert', process.env.ENVIRONMENT]
+            });
+
+      - name: Performance summary
+        run: |
+          echo "## Performance Monitoring Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment**: ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Duration**: ${{ env.MONITORING_DURATION }} minutes" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp**: $(date -Iseconds)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|--------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| P50 Latency | ${{ steps.analysis.outputs.p50 }}ms | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| P95 Latency | ${{ steps.analysis.outputs.p95 }}ms | ${{ steps.analysis.outputs.p95 > env.ALERT_THRESHOLD_P95 && '❌' || '✅' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| P99 Latency | ${{ steps.analysis.outputs.p99 }}ms | ${{ steps.analysis.outputs.p99 > env.ALERT_THRESHOLD_P99 && '❌' || '✅' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Success Rate | ${{ steps.analysis.outputs.success_rate }}% | ${{ steps.analysis.outputs.success_rate < 95 && '❌' || '✅' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Throughput | ${{ steps.analysis.outputs.rps }} ops/sec | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.analysis.outputs.alert_needed }}" = "true" ]; then
+            echo "🚨 **Performance alerts triggered** - Review metrics above" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **All performance metrics within acceptable ranges**" >> $GITHUB_STEP_SUMMARY
+          fi

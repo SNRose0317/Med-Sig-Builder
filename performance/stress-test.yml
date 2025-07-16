@@ -1,0 +1,162 @@
+# Artillery Stress Testing Configuration  
+# SNR-125: High-load stress testing scenarios
+# Tests system behavior under extreme load conditions
+
+config:
+  target: '{{ $processEnvironment.TARGET_URL || "http://localhost:5173" }}'
+  
+  # Aggressive stress test phases
+  phases:
+    # Baseline
+    - duration: 30
+      arrivalRate: 50
+      name: "Baseline load"
+      
+    # Ramp to stress
+    - duration: 60
+      arrivalRate: 100
+      rampTo: 500
+      name: "Ramp to stress"
+      
+    # Sustained stress
+    - duration: 180
+      arrivalRate: 500
+      name: "Sustained stress"
+      
+    # Extreme spike
+    - duration: 60
+      arrivalRate: 1000
+      name: "Extreme load spike"
+      
+    # Recovery test
+    - duration: 60
+      arrivalRate: 500
+      rampTo: 50
+      name: "Load recovery"
+
+  # Stress test thresholds - more lenient for stress conditions
+  ensure:
+    - http.response_time.p50: 50    # 50ms under stress
+    - http.response_time.p95: 200   # 200ms acceptable under stress
+    - http.response_time.p99: 500   # 500ms max under extreme load
+    - http.request_rate: 500        # Minimum 500 req/s under stress
+    - http.codes.200: 95            # 95% success rate under stress
+
+  # Resource monitoring
+  plugins:
+    expect: {}
+    metrics-by-endpoint: {}
+    hdrhistogram: {}
+    publish-metrics:
+      - type: prometheus
+        host: "{{ $processEnvironment.PROMETHEUS_HOST || 'localhost' }}"
+        port: 9090
+        prefix: "stress_test_"
+      - type: cloudwatch
+        region: "{{ $processEnvironment.AWS_REGION || 'us-east-1' }}"
+        namespace: "MedSigBuilder/StressTest"
+
+  # HTTP pool configuration for high load
+  http:
+    timeout: 60
+    pool: 50
+    maxSockets: 1000
+    keepAlive: true
+
+scenarios:
+  # High-throughput dispatcher test
+  - name: "High Throughput Dispatch"
+    weight: 50
+    flow:
+      - loop:
+          - post:
+              url: "/api/signature/dispatch"
+              name: "Burst Dispatch"
+              headers:
+                Connection: "keep-alive"
+              json:
+                id: "stress-{{ $randomNumber() }}"
+                timestamp: "{{ $isoTimestamp() }}"
+                patient:
+                  id: "patient-{{ $randomNumber() }}"
+                  age: "{{ $randomInt(1, 90) }}"
+                medication:
+                  id: "stress-med-{{ $randomInt(1, 100) }}"
+                  name: "Stress Test Med"
+                  type: "medication"
+                  isActive: true
+                  doseForm: "{{ $pick(['Tablet', 'Solution', 'Injection']) }}"
+                  code:
+                    coding:
+                      - display: "Stress Med"
+                  ingredient:
+                    - name: "Active Ingredient"
+                      strengthRatio:
+                        numerator:
+                          value: "{{ $randomInt(1, 1000) }}"
+                          unit: "mg"
+                        denominator:
+                          value: 1
+                          unit: "dose"
+                dose:
+                  value: "{{ $randomInt(1, 10) }}"
+                  unit: "{{ $pick(['tablet', 'mL', 'mg']) }}"
+                route: "{{ $pick(['by mouth', 'topically', 'intramuscularly']) }}"
+                frequency: "{{ $pick(['once daily', 'twice daily', 'three times daily']) }}"
+              expect:
+                - statusCode: 200
+          count: 10
+          
+  # Memory stress test
+  - name: "Memory Pressure Test"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/signature/batch-dispatch"
+          name: "Batch Processing"
+          json:
+            requests: "{{ $range(1, 50).map(() => ({ id: $uuid(), medication: 'stress-test', dose: $randomInt(1, 10) })) }}"
+            options:
+              parallel: true
+              timeout: 30000
+          expect:
+            - statusCode: 200
+            - responseTime: 10000  # 10s max for batch
+
+  # Concurrent user simulation under stress
+  - name: "Stress User Workflow"
+    weight: 20
+    flow:
+      - think: 1  # Minimal think time for stress
+      - post:
+          url: "/api/auth/session"
+          json:
+            userId: "stress-user-{{ $randomNumber() }}"
+      - loop:
+          - get:
+              url: "/api/medications/random"
+              name: "Get Random Med"
+          - post:
+              url: "/api/signature/quick-build"
+              name: "Quick Build"
+              json:
+                medicationId: "{{ $randomUuid() }}"
+                preset: "common"
+          count: 5
+      - delete:
+          url: "/api/auth/session"
+
+  # Resource exhaustion test
+  - name: "Resource Exhaustion"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/test/resource-intensive"
+          name: "CPU Intensive Operation"
+          json:
+            iterations: 10000
+            complexity: "high"
+            generateGarbage: true
+          expect:
+            - statusCode: 200
+            - responseTime: 5000  # 5s max for intensive ops

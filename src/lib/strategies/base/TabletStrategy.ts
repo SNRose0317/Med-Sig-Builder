@@ -10,16 +10,19 @@
 import { IBaseStrategyWithMetadata, SpecificityLevel } from '../types';
 import { MedicationRequestContext } from '../../../types/MedicationRequestContext';
 import { SignatureInstruction } from '../../../types/SignatureInstruction';
+import { createTemplateEngine } from '../../templates/templates';
+import { TemplateDataBuilder } from '../../templates/TemplateDataBuilder';
 
 export class TabletStrategy implements IBaseStrategyWithMetadata {
   readonly specificity = SpecificityLevel.DOSE_FORM;
+  private templateEngine = createTemplateEngine();
   
   readonly metadata = {
     id: 'tablet-strategy',
     name: 'Tablet Strategy',
     description: 'Handles oral solid medications with fractional dosing support',
     examples: ['Metformin 500mg', 'Atorvastatin 20mg', 'Levothyroxine 50mcg'],
-    version: '1.0.0'
+    version: '2.0.0'
   };
 
   /**
@@ -32,34 +35,16 @@ export class TabletStrategy implements IBaseStrategyWithMetadata {
   }
 
   /**
-   * Builds instruction with tablet-specific formatting
+   * Builds instruction using template engine with tablet-specific formatting
    */
   buildInstruction(context: MedicationRequestContext): SignatureInstruction {
-    const { medication, dose, route, frequency } = context;
+    const { medication, dose, frequency } = context;
     
-    // Build text with special tablet formatting
-    const parts: string[] = ['Take'];
+    // Build template data with all complex logic handled
+    const templateData = TemplateDataBuilder.forTablet(context);
     
-    // Format dose with fractional support
-    if (dose) {
-      const doseText = this.formatTabletDose(dose.value, dose.unit);
-      parts.push(doseText);
-    }
-    
-    // Add route if not oral (oral is implied for tablets)
-    const routeLower = route?.toLowerCase() || '';
-    if (routeLower === 'orally' || routeLower === 'oral' || !route) {
-      parts.push('by mouth');
-    } else {
-      parts.push(`by ${route} route`);
-    }
-    
-    // Add frequency - convert to lowercase
-    if (frequency) {
-      parts.push(frequency.toLowerCase());
-    }
-    
-    const text = parts.join(' ') + '.';
+    // Render text using template engine
+    const text = this.templateEngine.render('ORAL_TABLET_TEMPLATE', templateData);
     
     // Build FHIR-compliant instruction
     return {
@@ -75,9 +60,7 @@ export class TabletStrategy implements IBaseStrategyWithMetadata {
         },
         doseQuantity: {
           value: dose.value,
-          unit: dose.unit,
-          system: 'http://unitsofmeasure.org',
-          code: this.mapUnitCode(dose.unit)
+          unit: dose.unit
         }
       }] : undefined,
       route: {
@@ -101,44 +84,7 @@ export class TabletStrategy implements IBaseStrategyWithMetadata {
    * Explains the strategy's behavior
    */
   explain(): string {
-    return 'Tablet strategy: Handles oral solid medications with fractional dose support and proper pluralization';
-  }
-
-  /**
-   * Formats tablet doses with proper fractions
-   * CRITICAL: Never go below 1/4 tablet
-   */
-  private formatTabletDose(value: number, unit: string): string {
-    // If unit is already 'tablet', format with fractions
-    if (unit.toLowerCase() === 'tablet' || unit.toLowerCase() === 'tablets') {
-      if (value < 0.25) return '1/4 tablet';
-      if (value === 0.25) return '1/4 tablet';
-      if (value === 0.5) return '1/2 tablet';
-      if (value === 0.75) return '3/4 tablet';
-      if (value === 1) return '1 tablet';
-      if (value === 1.5) return '1 and 1/2 tablets';
-      if (value === 2) return '2 tablets';
-      if (value === 2.5) return '2 and 1/2 tablets';
-      
-      // For other values, format as decimal
-      const whole = Math.floor(value);
-      const fraction = value - whole;
-      
-      if (fraction === 0) {
-        return `${whole} tablets`;
-      } else if (fraction === 0.25) {
-        return `${whole} and 1/4 tablets`;
-      } else if (fraction === 0.5) {
-        return `${whole} and 1/2 tablets`;
-      } else if (fraction === 0.75) {
-        return `${whole} and 3/4 tablets`;
-      }
-      
-      return `${value} tablets`;
-    }
-    
-    // For other units (mg, mcg, etc.), return as-is
-    return `${value} ${unit}`;
+    return 'Tablet strategy: Uses template engine for internationalization-ready instructions with fractional dose support and proper pluralization';
   }
 
   /**
@@ -148,7 +94,7 @@ export class TabletStrategy implements IBaseStrategyWithMetadata {
     if (!frequency) return undefined;
 
     // Map common frequencies to FHIR timing
-    const timingMap: Record<string, any> = {
+    const timingMap: Record<string, { repeat: { frequency: number; period: number; periodUnit: string; when?: string[] } }> = {
       'once daily': {
         repeat: {
           frequency: 1,

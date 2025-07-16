@@ -1,0 +1,355 @@
+# CI/CD Performance Gates Workflow
+# SNR-124: Enforces performance thresholds in CI/CD pipeline
+# Integrates with both Jest benchmarks and Artillery load tests
+
+name: CI Performance Gates
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    types: [ opened, synchronize, ready_for_review ]
+  push:
+    branches: [ main, develop ]
+  workflow_call:
+    inputs:
+      performance_threshold_p95:
+        description: 'P95 latency threshold (ms)'
+        required: false
+        default: 50
+        type: number
+      run_load_tests:
+        description: 'Run full Artillery load tests'
+        required: false
+        default: true
+        type: boolean
+    outputs:
+      gates_status:
+        description: 'Performance gates overall status'
+        value: ${{ jobs.performance-gates.outputs.gates_status }}
+      performance_report:
+        description: 'Performance report URL'
+        value: ${{ jobs.performance-gates.outputs.report_url }}
+
+env:
+  NODE_VERSION: '18'
+  PERFORMANCE_THRESHOLD_P50: 20
+  PERFORMANCE_THRESHOLD_P95: ${{ inputs.performance_threshold_p95 || 50 }}
+  PERFORMANCE_THRESHOLD_P99: 100
+  THROUGHPUT_THRESHOLD: 1000
+
+jobs:
+  # Job 1: Run Jest performance benchmarks
+  jest-benchmarks:
+    name: Jest Performance Benchmarks
+    runs-on: ubuntu-latest
+    outputs:
+      benchmark_results: ${{ steps.benchmarks.outputs.results }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Jest performance benchmarks
+        id: benchmarks
+        run: |
+          echo "Running Jest performance benchmarks..."
+          npm run test:performance 2>&1 | tee benchmark-output.txt
+          
+          # Extract performance metrics from Jest output
+          if grep -q "Average performance:" benchmark-output.txt; then
+            AVG_PERF=$(grep "Average performance:" benchmark-output.txt | grep -oE '[0-9]+\.[0-9]+')
+            echo "Jest average performance: ${AVG_PERF}ms"
+            echo "avg_performance=$AVG_PERF" >> $GITHUB_OUTPUT
+          fi
+          
+          if grep -q "P95:" benchmark-output.txt; then
+            P95_PERF=$(grep "P95:" benchmark-output.txt | grep -oE '[0-9]+\.[0-9]+')
+            echo "Jest P95 performance: ${P95_PERF}ms" 
+            echo "p95_performance=$P95_PERF" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "benchmark_completed=true" >> $GITHUB_OUTPUT
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: jest-benchmark-results
+          path: benchmark-output.txt
+
+  # Job 2: Run Artillery load tests (conditional)
+  artillery-load-tests:
+    name: Artillery Load Tests
+    runs-on: ubuntu-latest
+    if: ${{ inputs.run_load_tests != false }}
+    needs: jest-benchmarks
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: med_sig_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Artillery
+        run: npm install -g artillery@latest
+
+      - name: Build application
+        run: npm run build
+
+      - name: Start test server
+        run: |
+          npm run dev &
+          echo $! > server.pid
+          
+          # Wait for server to be ready with timeout
+          timeout 60 bash -c 'until curl -f http://localhost:5173/api/health 2>/dev/null; do 
+            echo "Waiting for server..."; 
+            sleep 2; 
+          done'
+          
+          echo "Server started successfully"
+
+      - name: Run Artillery performance tests
+        run: |
+          echo "Running Artillery load tests..."
+          artillery run performance/load-test.yml --output artillery-results.json
+        env:
+          TARGET_URL: "http://localhost:5173"
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f server.pid ]; then
+            kill $(cat server.pid) || true
+          fi
+
+      - name: Upload Artillery results
+        uses: actions/upload-artifact@v3
+        with:
+          name: artillery-results
+          path: |
+            artillery-results.json
+            artillery-report.html
+
+  # Job 3: Evaluate performance gates
+  performance-gates:
+    name: Evaluate Performance Gates
+    runs-on: ubuntu-latest
+    needs: [jest-benchmarks, artillery-load-tests]
+    if: always()
+    outputs:
+      gates_status: ${{ steps.evaluation.outputs.gates_status }}
+      report_url: ${{ steps.evaluation.outputs.report_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Download Jest benchmark results
+        uses: actions/download-artifact@v3
+        with:
+          name: jest-benchmark-results
+        continue-on-error: true
+
+      - name: Download Artillery results
+        uses: actions/download-artifact@v3
+        with:
+          name: artillery-results
+        continue-on-error: true
+
+      - name: Make performance gates script executable
+        run: chmod +x scripts/performance-gates.js
+
+      - name: Evaluate performance gates
+        id: evaluation
+        run: |
+          echo "Evaluating performance gates..."
+          
+          # Run the performance gates evaluation
+          if node scripts/performance-gates.js evaluate; then
+            echo "gates_status=PASS" >> $GITHUB_OUTPUT
+            echo "✅ Performance gates PASSED"
+          else
+            echo "gates_status=FAIL" >> $GITHUB_OUTPUT
+            echo "❌ Performance gates FAILED"
+          fi
+          
+          # Generate report URL
+          echo "report_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
+
+      - name: Upload performance gates report
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-gates-report
+          path: |
+            performance-gates-results.json
+          retention-days: 30
+
+      - name: Fail if performance gates failed
+        if: steps.evaluation.outputs.gates_status == 'FAIL'
+        run: |
+          echo "❌ Performance gates failed. Check the performance metrics and optimize before merging."
+          exit 1
+
+  # Job 4: Performance gates summary and PR comment
+  performance-summary:
+    name: Performance Summary
+    runs-on: ubuntu-latest
+    needs: [jest-benchmarks, artillery-load-tests, performance-gates]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download performance gates report
+        uses: actions/download-artifact@v3
+        with:
+          name: performance-gates-report
+        continue-on-error: true
+
+      - name: Generate performance summary
+        id: summary
+        run: |
+          echo "## 🎯 Performance Gates Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status**: ${{ needs.performance-gates.outputs.gates_status == 'PASS' && '✅ PASSED' || '❌ FAILED' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Report**: [View Details](${{ needs.performance-gates.outputs.report_url }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Add Jest benchmark results if available
+          if [ "${{ needs.jest-benchmarks.outputs.benchmark_results }}" != "" ]; then
+            echo "### Jest Benchmarks" >> $GITHUB_STEP_SUMMARY
+            echo "- Average Performance: ${{ needs.jest-benchmarks.outputs.avg_performance || 'N/A' }}ms" >> $GITHUB_STEP_SUMMARY
+            echo "- P95 Performance: ${{ needs.jest-benchmarks.outputs.p95_performance || 'N/A' }}ms" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Add detailed gates results if available
+          if [ -f "performance-gates-results.json" ]; then
+            echo "### Performance Gates" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            jq '.summary' performance-gates-results.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Comment on PR with performance results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let comment = '## 🎯 Performance Gates Report\n\n';
+            
+            // Add overall status
+            const gatesStatus = '${{ needs.performance-gates.outputs.gates_status }}';
+            const statusEmoji = gatesStatus === 'PASS' ? '✅' : '❌';
+            comment += `**Overall Status**: ${statusEmoji} ${gatesStatus}\n\n`;
+            
+            // Add Jest benchmark results
+            const avgPerf = '${{ needs.jest-benchmarks.outputs.avg_performance }}';
+            const p95Perf = '${{ needs.jest-benchmarks.outputs.p95_performance }}';
+            
+            if (avgPerf && avgPerf !== '') {
+              comment += '### Jest Performance Benchmarks\n';
+              comment += `- **Average Dispatcher Latency**: ${avgPerf}ms\n`;
+              if (p95Perf && p95Perf !== '') {
+                comment += `- **P95 Dispatcher Latency**: ${p95Perf}ms\n`;
+              }
+              comment += '\n';
+            }
+            
+            // Add performance gates details if available
+            try {
+              if (fs.existsSync('performance-gates-results.json')) {
+                const results = JSON.parse(fs.readFileSync('performance-gates-results.json'));
+                
+                comment += '### Performance Gates\n';
+                comment += `- **Total Gates**: ${results.summary.totalGates}\n`;
+                comment += `- **Passed**: ${results.summary.passedGates} ✅\n`;
+                comment += `- **Failed**: ${results.summary.failedGates} ${results.summary.failedGates > 0 ? '❌' : ''}\n`;
+                comment += `- **Warnings**: ${results.summary.warningGates} ${results.summary.warningGates > 0 ? '⚠️' : ''}\n`;
+                comment += `- **Pass Rate**: ${results.summary.passRate.toFixed(1)}%\n\n`;
+                
+                if (results.failed.length > 0) {
+                  comment += '#### Failed Gates\n';
+                  results.failed.forEach(gate => {
+                    comment += `- ❌ **${gate.description}**: ${gate.actualValue.toFixed(2)} > ${gate.threshold}\n`;
+                  });
+                  comment += '\n';
+                }
+                
+                if (results.warnings.length > 0) {
+                  comment += '#### Warnings\n';
+                  results.warnings.forEach(gate => {
+                    comment += `- ⚠️ **${gate.description}**: ${gate.actualValue.toFixed(2)}\n`;
+                  });
+                  comment += '\n';
+                }
+              }
+            } catch (error) {
+              comment += '⚠️ Could not load detailed performance gates results\n\n';
+            }
+            
+            // Add thresholds reference
+            comment += '### Performance Thresholds\n';
+            comment += '- **P50 Latency**: < 20ms\n';
+            comment += '- **P95 Latency**: < 50ms\n';
+            comment += '- **P99 Latency**: < 100ms\n';
+            comment += '- **Throughput**: > 1000 ops/sec\n';
+            comment += '- **Success Rate**: > 99%\n\n';
+            
+            if (gatesStatus === 'FAIL') {
+              comment += '🚨 **Action Required**: Performance gates failed. Please review and optimize before merging.\n';
+            } else {
+              comment += '🎉 **All performance gates passed!** Ready for deployment.\n';
+            }
+            
+            comment += `\n📊 [View Full Report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+            
+            // Post comment
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Set overall workflow status
+        run: |
+          if [ "${{ needs.performance-gates.outputs.gates_status }}" = "FAIL" ]; then
+            echo "❌ CI Performance Gates: FAILED"
+            exit 1
+          else
+            echo "✅ CI Performance Gates: PASSED"
+          fi

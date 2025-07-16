@@ -71,9 +71,14 @@ export function generateSignature(
 ): SignatureResult {
   // Create context for the new system
   const context: MedicationRequestContext = {
+    id: `sig-${Date.now()}`,
+    timestamp: new Date().toISOString(),
+    patient: { id: 'unknown', age: 0 }, // Placeholder since we don't have patient context
     medication: {
       id: medication.id,
       name: medication.name,
+      type: medication.type as 'medication' | 'supplement' | 'compound',
+      isActive: medication.isActive,
       code: medication.code,
       doseForm: medication.doseForm,
       ingredient: medication.ingredient,
@@ -86,7 +91,7 @@ export function generateSignature(
     },
     route: routeName,
     frequency: frequencyName,
-    additionalInstructions: specialInstructions ? [specialInstructions] : undefined
+    specialInstructions
   };
   
   // Get registry and dispatcher

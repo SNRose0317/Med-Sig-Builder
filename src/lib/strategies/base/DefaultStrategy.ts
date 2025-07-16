@@ -10,10 +10,13 @@
 import { IBaseStrategyWithMetadata, SpecificityLevel } from '../types';
 import { MedicationRequestContext } from '../../../types/MedicationRequestContext';
 import { SignatureInstruction } from '../../../types/SignatureInstruction';
-import { getVerb } from '../../../constants/medication-data';
+// Template engine handles verb selection now
+import { createTemplateEngine } from '../../templates/templates';
+import { TemplateDataBuilder } from '../../templates/TemplateDataBuilder';
 
 export class DefaultStrategy implements IBaseStrategyWithMetadata {
   readonly specificity = SpecificityLevel.DEFAULT;
+  private templateEngine = createTemplateEngine();
   
   readonly metadata = {
     id: 'default-strategy',
@@ -26,47 +29,21 @@ export class DefaultStrategy implements IBaseStrategyWithMetadata {
    * Always matches as the fallback strategy
    */
   matches(context: MedicationRequestContext): boolean {
-    // Default strategy always matches
+    void context; // Mark as intentionally unused - default strategy always matches
     return true;
   }
 
   /**
-   * Builds a simple instruction using basic formatting
+   * Builds a simple instruction using template engine
    */
   buildInstruction(context: MedicationRequestContext): SignatureInstruction {
-    const { medication, dose, route, frequency } = context;
+    const { dose, route, frequency } = context;
     
-    // Get appropriate verb based on dose form and route
-    const verb = getVerb(medication?.doseForm || 'Tablet', route || 'oral');
+    // Build template data for default case
+    const templateData = TemplateDataBuilder.forDefault(context);
     
-    // Build basic text
-    const parts: string[] = [verb];
-    
-    // Add dose
-    if (dose) {
-      parts.push(`${dose.value} ${dose.unit}`);
-    }
-    
-    // Add route - convert to human readable
-    if (route) {
-      const routeLower = route.toLowerCase();
-      if (routeLower === 'orally' || routeLower === 'oral') {
-        parts.push('by mouth');
-      } else if (routeLower === 'intramuscularly' || routeLower === 'intramuscular') {
-        parts.push('intramuscularly');
-      } else if (routeLower === 'topically' || routeLower === 'topical') {
-        parts.push('topically');
-      } else {
-        parts.push(`by ${route} route`);
-      }
-    }
-    
-    // Add frequency - convert to lowercase
-    if (frequency) {
-      parts.push(frequency.toLowerCase());
-    }
-    
-    const text = parts.join(' ') + '.';
+    // Render instruction text using template engine
+    const text = this.templateEngine.render('DEFAULT_TEMPLATE', templateData);
     
     // Build FHIR-compliant instruction
     return {
@@ -82,9 +59,7 @@ export class DefaultStrategy implements IBaseStrategyWithMetadata {
         },
         doseQuantity: {
           value: dose.value,
-          unit: dose.unit,
-          system: 'http://unitsofmeasure.org',
-          code: dose.unit
+          unit: dose.unit
         }
       }] : undefined,
       route: route ? {
@@ -111,7 +86,7 @@ export class DefaultStrategy implements IBaseStrategyWithMetadata {
     if (!frequency) return undefined;
 
     // Map common frequencies to FHIR timing
-    const timingMap: Record<string, any> = {
+    const timingMap: Record<string, { repeat: { frequency: number; period: number; periodUnit: string; when?: string[] } }> = {
       'once daily': {
         repeat: {
           frequency: 1,

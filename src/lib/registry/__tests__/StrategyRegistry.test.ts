@@ -7,6 +7,7 @@ import { IBaseStrategy, IModifierStrategy, SpecificityLevel } from '../../strate
 import { MedicationRequestContext } from '../../../types/MedicationRequestContext';
 import { SignatureInstruction } from '../../../types/SignatureInstruction';
 import { DuplicateStrategyError, PriorityConflictError } from '../../dispatcher/errors';
+import { createTestMedicationProfile, createTestContext } from '../../dispatcher/__tests__/test-helpers';
 
 // Mock strategies for testing
 class MockBaseStrategy implements IBaseStrategy {
@@ -20,6 +21,7 @@ class MockBaseStrategy implements IBaseStrategy {
   }
 
   buildInstruction(context: MedicationRequestContext): SignatureInstruction {
+    void context; // Mark as intentionally unused
     return { text: 'Mock instruction' };
   }
 
@@ -39,6 +41,7 @@ class MockModifierStrategy implements IModifierStrategy {
   }
 
   modify(instruction: SignatureInstruction, context: MedicationRequestContext): SignatureInstruction {
+    void context; // Mark as intentionally unused
     return {
       ...instruction,
       text: (instruction.text || '') + ' [modified]'
@@ -179,20 +182,20 @@ describe('StrategyRegistry', () => {
       );
       const modifier2 = new MockModifierStrategy(
         20,
-        ctx => true
+        () => true
       );
 
       registry.registerBase('tablet', baseStrategy);
       registry.registerModifier('tablet-mod', modifier1);
       registry.registerModifier('universal', modifier2);
 
-      const context: MedicationRequestContext = {
-        medication: {
+      const context = createTestContext({
+        medication: createTestMedicationProfile({
           id: 'test',
           name: 'Test',
           doseForm: 'Tablet'
-        }
-      };
+        })
+      });
 
       const chain = registry.getCompositionChain(context);
       expect(chain.base.name).toBe('tablet');
@@ -211,9 +214,9 @@ describe('StrategyRegistry', () => {
       );
       registry.registerBase('never-match', baseStrategy);
 
-      const context: MedicationRequestContext = {
-        medication: { id: 'test', name: 'Test' }
-      };
+      const context = createTestContext({
+        medication: createTestMedicationProfile({ id: 'test', name: 'Test' })
+      });
 
       const chain = registry.getCompositionChain(context);
       expect(chain.base.name).toBe('none');
@@ -256,13 +259,13 @@ describe('StrategyRegistry', () => {
       registry.registerBase('tablet', baseStrategy);
       registry.registerModifier('tablet-mod', modifier);
 
-      const context: MedicationRequestContext = {
-        medication: {
+      const context = createTestContext({
+        medication: createTestMedicationProfile({
           id: 'test',
           name: 'Test',
           doseForm: 'Tablet'
-        }
-      };
+        })
+      });
 
       const explanation = registry.explainSelection(context);
       

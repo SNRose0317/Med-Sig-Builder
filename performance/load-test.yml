@@ -1,0 +1,223 @@
+# Artillery Load Testing Suite
+# SNR-125: Comprehensive performance testing scenarios
+# Supports both local development and CI/CD integration
+
+config:
+  target: '{{ $processEnvironment.TARGET_URL || "http://localhost:5173" }}'
+  
+  # Test phases with progressive load
+  phases:
+    # Warm-up phase
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm-up phase"
+      
+    # Normal load simulation
+    - duration: 60
+      arrivalRate: 25
+      name: "Normal operations"
+      
+    # Peak load simulation  
+    - duration: 90
+      arrivalRate: 50
+      name: "Peak usage"
+      
+    # Stress test
+    - duration: 60
+      arrivalRate: 100
+      name: "Stress test"
+      
+    # Spike test
+    - duration: 30
+      arrivalRate: 200
+      name: "Traffic spike"
+      
+    # Cool down
+    - duration: 30
+      arrivalRate: 10
+      name: "Cool down"
+
+  # Performance SLA thresholds (SNR-124 gates)
+  ensure:
+    - http.response_time.p50: 20    # 50th percentile < 20ms
+    - http.response_time.p95: 50    # 95th percentile < 50ms
+    - http.response_time.p99: 100   # 99th percentile < 100ms
+    - http.request_rate: 1000       # Minimum 1000 requests/sec
+    - http.codes.200: 99            # 99% success rate
+
+  # Payload configuration
+  payload:
+    - path: "./performance/test-data.csv"
+      fields:
+        - "medicationId"
+        - "doseValue"
+        - "doseUnit"
+        - "route"
+        - "frequency"
+      loadAll: true
+      skipHeader: true
+
+  # Plugin configuration
+  plugins:
+    expect: {}
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+    publish-metrics:
+      - type: prometheus
+        host: "{{ $processEnvironment.PROMETHEUS_HOST || 'localhost' }}"
+        port: "{{ $processEnvironment.PROMETHEUS_PORT || 9090 }}"
+        prefix: "artillery_"
+      - type: statsd
+        host: "{{ $processEnvironment.STATSD_HOST || 'localhost' }}"
+        port: "{{ $processEnvironment.STATSD_PORT || 8125 }}"
+        prefix: "med-sig-builder."
+
+  # HTTP configuration
+  http:
+    timeout: 30
+    pool: 10
+    maxSockets: 100
+
+  # Custom variables
+  variables:
+    testRun: "{{ $processEnvironment.TEST_RUN_ID || $uuid() }}"
+    environment: "{{ $processEnvironment.NODE_ENV || 'test' }}"
+
+scenarios:
+  # Primary dispatcher performance test
+  - name: "Strategy Dispatcher Load Test"
+    weight: 40
+    flow:
+      - post:
+          url: "/api/signature/dispatch"
+          name: "Dispatch Signature Request"
+          headers:
+            Content-Type: "application/json"
+            X-Test-Run: "{{ testRun }}"
+          json:
+            id: "perf-test-{{ $randomNumber() }}"
+            timestamp: "{{ $isoTimestamp() }}"
+            patient:
+              id: "patient-{{ $randomNumber() }}"
+              age: "{{ $randomInt(18, 80) }}"
+            medication:
+              id: "{{ medicationId }}"
+              name: "Test Medication {{ $randomNumber() }}"
+              type: "medication"
+              isActive: true
+              doseForm: "{{ $pick(['Tablet', 'Capsule', 'Solution', 'Suspension', 'Cream']) }}"
+              code:
+                coding:
+                  - display: "Test Medication"
+              ingredient:
+                - name: "Test Ingredient"
+                  strengthRatio:
+                    numerator:
+                      value: "{{ $randomInt(5, 500) }}"
+                      unit: "mg"
+                    denominator:
+                      value: 1
+                      unit: "{{ doseUnit }}"
+            dose:
+              value: "{{ doseValue }}"
+              unit: "{{ doseUnit }}"
+            route: "{{ route }}"
+            frequency: "{{ frequency }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "instructions"
+            - responseTime: 100  # Max 100ms per request
+
+  # Golden Master test performance
+  - name: "Golden Master Execution"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/test/golden-master/run"
+          name: "Golden Master Test"
+          headers:
+            Content-Type: "application/json"
+            X-Test-Run: "{{ testRun }}"
+          json:
+            testSuite: "performance"
+            parallel: true
+            maxConcurrency: 10
+          expect:
+            - statusCode: 200
+            - hasProperty: "results"
+            - responseTime: 500  # Max 500ms for test suite
+
+  # Builder factory performance
+  - name: "Builder Factory Stress Test"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/builders/create"
+          name: "Create Builder Instance"
+          headers:
+            Content-Type: "application/json"
+          json:
+            medicationType: "{{ $pick(['Tablet', 'Liquid', 'Injectable', 'Topical', 'Complex']) }}"
+            configuration:
+              cacheEnabled: true
+              validateInputs: true
+              generateAuditTrail: true
+          expect:
+            - statusCode: 200
+            - hasProperty: "builderId"
+            - responseTime: 50   # Max 50ms for builder creation
+
+  # Memory usage monitoring
+  - name: "Memory Usage Monitor"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/health/memory"
+          name: "Memory Health Check"
+          expect:
+            - statusCode: 200
+            - hasProperty: "heapUsed"
+            - hasProperty: "heapTotal"
+            - responseTime: 10   # Very fast health check
+
+  # Concurrent user simulation
+  - name: "Concurrent User Workflow"
+    weight: 5
+    flow:
+      # User logs in
+      - post:
+          url: "/api/auth/session"
+          name: "User Session"
+          json:
+            userId: "user-{{ $randomNumber() }}"
+            sessionId: "session-{{ $uuid() }}"
+          
+      # User searches medications
+      - get:
+          url: "/api/medications/search?q={{ $pick(['metformin', 'lisinopril', 'amoxicillin', 'testosterone']) }}"
+          name: "Search Medications"
+          
+      # User builds signature  
+      - post:
+          url: "/api/signature/build"
+          name: "Build Signature"
+          json:
+            medicationId: "{{ medicationId }}"
+            dose:
+              value: "{{ doseValue }}"
+              unit: "{{ doseUnit }}"
+            route: "{{ route }}"
+            frequency: "{{ frequency }}"
+            
+      # User saves result
+      - post:
+          url: "/api/signatures/save"
+          name: "Save Signature"
+          json:
+            signature: "Take 1 tablet by mouth twice daily"
+            medicationId: "{{ medicationId }}"
+            
+      # Logout
+      - delete:
+          url: "/api/auth/session"
+          name: "End Session"

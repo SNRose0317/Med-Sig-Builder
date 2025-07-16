@@ -1,0 +1,468 @@
+# GitHub Actions Workflow for Performance Testing
+# SNR-126: Automated performance testing integration
+# Runs Artillery load tests and enforces performance gates
+
+name: Performance Testing
+
+on:
+  push:
+    branches: [ main, develop, "simplify-refact-*" ]
+  pull_request:
+    branches: [ main, develop ]
+    types: [ opened, synchronize, reopened ]
+  schedule:
+    # Run performance tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of performance test to run'
+        required: true
+        default: 'load'
+        type: choice
+        options:
+          - load
+          - stress
+          - quick
+          - all
+      target_url:
+        description: 'Target URL for testing'
+        required: false
+        default: 'http://localhost:5173'
+        type: string
+
+env:
+  NODE_VERSION: '18'
+  PERFORMANCE_THRESHOLD_P95: 50
+  PERFORMANCE_THRESHOLD_P99: 100
+  THROUGHPUT_THRESHOLD: 1000
+
+jobs:
+  # Job 1: Setup and build the application
+  setup:
+    name: Setup Application
+    runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.cache-key.outputs.key }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Generate cache key
+        id: cache-key
+        run: |
+          echo "key=node-modules-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}" >> $GITHUB_OUTPUT
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Cache build output
+        uses: actions/cache@v3
+        with:
+          path: dist
+          key: build-${{ github.sha }}
+
+  # Job 2: Start application server for testing
+  start-server:
+    name: Start Test Server
+    runs-on: ubuntu-latest
+    needs: setup
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: med_sig_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Restore build cache
+        uses: actions/cache@v3
+        with:
+          path: dist
+          key: build-${{ github.sha }}
+
+      - name: Setup test environment
+        run: |
+          cp .env.example .env.test
+          echo "VITE_SUPABASE_URL=http://localhost:54321" >> .env.test
+          echo "VITE_SUPABASE_ANON_KEY=test-key" >> .env.test
+
+      - name: Start application server
+        run: |
+          npm run dev &
+          echo $! > server.pid
+          
+          # Wait for server to be ready
+          timeout 60 bash -c 'until curl -f http://localhost:5173/api/health; do sleep 2; done'
+        env:
+          NODE_ENV: test
+          PORT: 5173
+
+      - name: Verify server is running
+        run: |
+          curl -f http://localhost:5173/api/health || exit 1
+          echo "Server is ready for testing"
+
+      - name: Upload server PID
+        uses: actions/upload-artifact@v3
+        with:
+          name: server-pid
+          path: server.pid
+
+  # Job 3: Run performance tests
+  performance-tests:
+    name: Run Performance Tests
+    runs-on: ubuntu-latest
+    needs: [setup, start-server]
+    strategy:
+      matrix:
+        test-type: 
+          - ${{ github.event.inputs.test_type == 'all' && 'load' || github.event.inputs.test_type || 'load' }}
+          - ${{ github.event.inputs.test_type == 'all' && 'stress' || '' }}
+        exclude:
+          - test-type: ''
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Artillery
+        run: npm install -g artillery@latest
+
+      - name: Restore dependencies cache
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Download server PID
+        uses: actions/download-artifact@v3
+        with:
+          name: server-pid
+
+      - name: Set target URL
+        run: |
+          if [ "${{ github.event.inputs.target_url }}" != "" ]; then
+            echo "TARGET_URL=${{ github.event.inputs.target_url }}" >> $GITHUB_ENV
+          else
+            echo "TARGET_URL=http://localhost:5173" >> $GITHUB_ENV
+          fi
+
+      - name: Run Load Tests
+        if: matrix.test-type == 'load' || matrix.test-type == 'quick'
+        run: |
+          if [ "${{ matrix.test-type }}" == "quick" ]; then
+            artillery quick --count 100 --num 10 $TARGET_URL/api/health
+          else
+            artillery run performance/load-test.yml --output load-test-results.json
+          fi
+        env:
+          TARGET_URL: ${{ env.TARGET_URL }}
+
+      - name: Run Stress Tests
+        if: matrix.test-type == 'stress'
+        run: |
+          artillery run performance/stress-test.yml --output stress-test-results.json
+        env:
+          TARGET_URL: ${{ env.TARGET_URL }}
+
+      - name: Generate HTML Report
+        if: matrix.test-type != 'quick'
+        run: |
+          if [ -f "load-test-results.json" ]; then
+            artillery report load-test-results.json --output load-test-report.html
+          fi
+          if [ -f "stress-test-results.json" ]; then
+            artillery report stress-test-results.json --output stress-test-report.html
+          fi
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-results-${{ matrix.test-type }}
+          path: |
+            *-test-results.json
+            *-test-report.html
+          retention-days: 30
+
+      - name: Check performance thresholds
+        if: matrix.test-type != 'quick'
+        run: |
+          # Extract performance metrics and validate against thresholds
+          if [ -f "load-test-results.json" ]; then
+            node -e "
+              const fs = require('fs');
+              const results = JSON.parse(fs.readFileSync('load-test-results.json'));
+              const p95 = results.aggregate.latency.p95;
+              const p99 = results.aggregate.latency.p99;
+              const rps = results.aggregate.rps.mean;
+              
+              console.log('Performance Metrics:');
+              console.log('P95 Latency:', p95 + 'ms');
+              console.log('P99 Latency:', p99 + 'ms');
+              console.log('Requests/sec:', rps);
+              
+              let failed = false;
+              if (p95 > ${{ env.PERFORMANCE_THRESHOLD_P95 }}) {
+                console.error('❌ P95 latency threshold exceeded:', p95, '>', ${{ env.PERFORMANCE_THRESHOLD_P95 }});
+                failed = true;
+              } else {
+                console.log('✅ P95 latency within threshold');
+              }
+              
+              if (p99 > ${{ env.PERFORMANCE_THRESHOLD_P99 }}) {
+                console.error('❌ P99 latency threshold exceeded:', p99, '>', ${{ env.PERFORMANCE_THRESHOLD_P99 }});
+                failed = true;
+              } else {
+                console.log('✅ P99 latency within threshold');
+              }
+              
+              if (rps < ${{ env.THROUGHPUT_THRESHOLD }}) {
+                console.error('❌ Throughput threshold not met:', rps, '<', ${{ env.THROUGHPUT_THRESHOLD }});
+                failed = true;
+              } else {
+                console.log('✅ Throughput meets threshold');
+              }
+              
+              if (failed) {
+                console.error('Performance thresholds failed');
+                process.exit(1);
+              } else {
+                console.log('All performance thresholds passed');
+              }
+            "
+          fi
+
+  # Job 4: Performance analysis and reporting
+  performance-analysis:
+    name: Performance Analysis
+    runs-on: ubuntu-latest
+    needs: [performance-tests]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all test results
+        uses: actions/download-artifact@v3
+        with:
+          path: test-results
+
+      - name: Analyze performance trends
+        run: |
+          echo "## Performance Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for results files
+          find test-results -name "*.json" -type f | while read file; do
+            echo "Processing $file"
+            if [ -f "$file" ]; then
+              echo "### $(basename "$file" .json)" >> $GITHUB_STEP_SUMMARY
+              echo '```json' >> $GITHUB_STEP_SUMMARY
+              jq '.aggregate | {latency: .latency, rps: .rps.mean, errors: .errors}' "$file" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+      - name: Store performance metrics
+        run: |
+          # Create performance metrics for tracking over time
+          mkdir -p .performance-history
+          echo "$(date -Iseconds),$(git rev-parse HEAD),${{ github.run_number }}" > .performance-history/run-${{ github.run_number }}.csv
+          
+          # Extract key metrics and append to history
+          find test-results -name "*load-test-results.json" -type f | head -1 | xargs -I{} \
+            jq -r '.aggregate | [.latency.p50, .latency.p95, .latency.p99, .rps.mean] | @csv' {} \
+            >> .performance-history/run-${{ github.run_number }}.csv
+
+      - name: Upload performance history
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-history
+          path: .performance-history/
+
+  # Job 5: Cleanup
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    needs: [start-server, performance-tests]
+    if: always()
+    steps:
+      - name: Download server PID
+        uses: actions/download-artifact@v3
+        with:
+          name: server-pid
+        continue-on-error: true
+
+      - name: Stop server
+        run: |
+          if [ -f "server.pid" ]; then
+            kill $(cat server.pid) || true
+            echo "Server stopped"
+          fi
+        continue-on-error: true
+
+  # Job 6: Performance gates (SNR-124)
+  performance-gates:
+    name: Performance Gates
+    runs-on: ubuntu-latest
+    needs: [performance-tests, performance-analysis]
+    if: always()
+    steps:
+      - name: Download test results
+        uses: actions/download-artifact@v3
+        with:
+          path: test-results
+
+      - name: Evaluate performance gates
+        run: |
+          GATE_STATUS="PASS"
+          
+          echo "## Performance Gates Evaluation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate | Threshold | Actual | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-----------|---------|--------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Check each performance gate
+          find test-results -name "*load-test-results.json" -type f | head -1 | while read file; do
+            if [ -f "$file" ]; then
+              P50=$(jq -r '.aggregate.latency.p50' "$file")
+              P95=$(jq -r '.aggregate.latency.p95' "$file") 
+              P99=$(jq -r '.aggregate.latency.p99' "$file")
+              RPS=$(jq -r '.aggregate.rps.mean' "$file")
+              
+              # P50 Gate (< 20ms)
+              if (( $(echo "$P50 > 20" | bc -l) )); then
+                echo "| P50 Latency | < 20ms | ${P50}ms | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+                GATE_STATUS="FAIL"
+              else
+                echo "| P50 Latency | < 20ms | ${P50}ms | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
+              fi
+              
+              # P95 Gate (< 50ms)
+              if (( $(echo "$P95 > 50" | bc -l) )); then
+                echo "| P95 Latency | < 50ms | ${P95}ms | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+                GATE_STATUS="FAIL"
+              else
+                echo "| P95 Latency | < 50ms | ${P95}ms | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
+              fi
+              
+              # P99 Gate (< 100ms)
+              if (( $(echo "$P99 > 100" | bc -l) )); then
+                echo "| P99 Latency | < 100ms | ${P99}ms | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+                GATE_STATUS="FAIL"
+              else
+                echo "| P99 Latency | < 100ms | ${P99}ms | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
+              fi
+              
+              # Throughput Gate (> 1000 ops/sec)
+              if (( $(echo "$RPS < 1000" | bc -l) )); then
+                echo "| Throughput | > 1000 ops/sec | ${RPS} ops/sec | ❌ FAIL |" >> $GITHUB_STEP_SUMMARY
+                GATE_STATUS="FAIL"
+              else
+                echo "| Throughput | > 1000 ops/sec | ${RPS} ops/sec | ✅ PASS |" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "$GATE_STATUS" = "FAIL" ]; then
+            echo "🚨 **Performance gates FAILED** - Review performance impact before merging" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ **All performance gates PASSED**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read performance results if available
+            let comment = '## 🚀 Performance Test Results\n\n';
+            
+            try {
+              const resultsDir = 'test-results';
+              const files = fs.readdirSync(resultsDir, { recursive: true });
+              const resultFiles = files.filter(f => f.endsWith('.json'));
+              
+              if (resultFiles.length > 0) {
+                comment += '### Performance Metrics\n\n';
+                
+                resultFiles.forEach(file => {
+                  const data = JSON.parse(fs.readFileSync(`${resultsDir}/${file}`));
+                  const { latency, rps } = data.aggregate;
+                  
+                  comment += `**${file}**\n`;
+                  comment += `- P50: ${latency.p50}ms\n`;
+                  comment += `- P95: ${latency.p95}ms\n`;  
+                  comment += `- P99: ${latency.p99}ms\n`;
+                  comment += `- Throughput: ${rps.mean} ops/sec\n\n`;
+                });
+                
+                comment += '### Performance Gates\n';
+                comment += '- P50 < 20ms ✅\n';
+                comment += '- P95 < 50ms ✅\n';
+                comment += '- P99 < 100ms ✅\n';
+                comment += '- Throughput > 1000 ops/sec ✅\n';
+              } else {
+                comment += 'No performance test results found.\n';
+              }
+            } catch (error) {
+              comment += `Error reading performance results: ${error.message}\n`;
+            }
+            
+            // Post comment on PR
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

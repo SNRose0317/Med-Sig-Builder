@@ -1,0 +1,206 @@
+# Artillery Load Testing Configuration
+# Performance testing for Med Sig Builder Strategy Dispatcher
+# SNR-125: Artillery Load Testing Setup
+
+config:
+  target: 'http://localhost:5173'
+  phases:
+    - duration: 30
+      arrivalRate: 10
+      name: "Warm up"
+    - duration: 60
+      arrivalRate: 50
+      name: "Ramp up load"
+    - duration: 120
+      arrivalRate: 100
+      name: "Sustained load"
+    - duration: 60
+      arrivalRate: 200
+      name: "Spike test"
+  processor: "./artillery-scenarios.js"
+  
+  # Performance thresholds (SNR-124 requirements)
+  ensure:
+    - http.response_time.p50: 20    # P50 latency < 20ms
+    - http.response_time.p95: 50    # P95 latency < 50ms  
+    - http.response_time.p99: 100   # P99 latency < 100ms
+    - http.request_rate: 1000       # Throughput > 1000 ops/sec
+
+  # Metrics collection
+  plugins:
+    - expect: {}
+    - metrics-by-endpoint: {}
+    - publish-metrics:
+        - type: statsd
+          host: localhost
+          port: 8125
+          prefix: "med-sig-builder"
+
+scenarios:
+  - name: "Simple Tablet Dispatch"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/signature/dispatch"
+          json:
+            id: "test-{{ $randomNumber() }}"
+            timestamp: "{{ $isoTimestamp() }}"
+            patient:
+              id: "patient-{{ $randomNumber() }}"
+              age: "{{ $randomInt(18, 80) }}"
+            medication:
+              id: "metformin-500"
+              name: "Metformin 500mg"
+              type: "medication"
+              isActive: true
+              doseForm: "Tablet"
+              code:
+                coding:
+                  - display: "Metformin"
+              ingredient:
+                - name: "Metformin"
+                  strengthRatio:
+                    numerator:
+                      value: 500
+                      unit: "mg"
+                    denominator:
+                      value: 1
+                      unit: "tablet"
+            dose:
+              value: "{{ $randomInt(1, 2) }}"
+              unit: "tablet"
+            route: "Orally"
+            frequency: "{{ frequency() }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "instructions"
+            - contentType: json
+
+  - name: "Liquid Medication Dispatch"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/signature/dispatch"
+          json:
+            id: "test-{{ $randomNumber() }}"
+            timestamp: "{{ $isoTimestamp() }}"
+            patient:
+              id: "patient-{{ $randomNumber() }}"
+              age: "{{ $randomInt(2, 65) }}"
+            medication:
+              id: "amox-susp"
+              name: "Amoxicillin Suspension"
+              type: "medication"
+              isActive: true
+              doseForm: "Suspension"
+              code:
+                coding:
+                  - display: "Amoxicillin"
+              ingredient:
+                - name: "Amoxicillin"
+                  strengthRatio:
+                    numerator:
+                      value: 250
+                      unit: "mg"
+                    denominator:
+                      value: 5
+                      unit: "mL"
+            dose:
+              value: "{{ liquidDose() }}"
+              unit: "{{ liquidUnit() }}"
+            route: "Orally"
+            frequency: "{{ frequency() }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "instructions"
+
+  - name: "Testosterone Injection Dispatch"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/signature/dispatch"
+          json:
+            id: "test-{{ $randomNumber() }}"
+            timestamp: "{{ $isoTimestamp() }}"
+            patient:
+              id: "patient-{{ $randomNumber() }}"
+              age: "{{ $randomInt(18, 65) }}"
+            medication:
+              id: "testosterone-cypionate-200mg-ml"
+              name: "Testosterone Cypionate 200mg/mL"
+              type: "medication"
+              isActive: true
+              doseForm: "Vial"
+              code:
+                coding:
+                  - display: "Testosterone Cypionate"
+              ingredient:
+                - name: "Testosterone Cypionate"
+                  strengthRatio:
+                    numerator:
+                      value: 200
+                      unit: "mg"
+                    denominator:
+                      value: 1
+                      unit: "mL"
+            dose:
+              value: "{{ testosteroneDose() }}"
+              unit: "mg"
+            route: "Intramuscularly"
+            frequency: "{{ injectionFrequency() }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "instructions"
+
+  - name: "Topiclick Cream Dispatch"
+    weight: 15
+    flow:
+      - post:
+          url: "/api/signature/dispatch"
+          json:
+            id: "test-{{ $randomNumber() }}"
+            timestamp: "{{ $isoTimestamp() }}"
+            patient:
+              id: "patient-{{ $randomNumber() }}"
+              age: "{{ $randomInt(25, 75) }}"
+            medication:
+              id: "estradiol-cream"
+              name: "Estradiol Cream"
+              type: "medication"
+              isActive: true
+              doseForm: "Cream"
+              code:
+                coding:
+                  - display: "Estradiol"
+              dispenserInfo:
+                type: "Topiclick"
+                unit: "click"
+                pluralUnit: "clicks"
+                conversionRatio: 4
+              ingredient:
+                - name: "Estradiol"
+                  strengthRatio:
+                    numerator:
+                      value: 10
+                      unit: "mg"
+                    denominator:
+                      value: 1
+                      unit: "g"
+            dose:
+              value: "{{ topiclickDose() }}"
+              unit: "click"
+            route: "Topically"
+            frequency: "{{ topicalFrequency() }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "instructions"
+
+  - name: "Memory Usage Monitor"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/health/memory"
+          expect:
+            - statusCode: 200
+            - hasProperty: "heapUsed"
+            - hasProperty: "heapTotal"

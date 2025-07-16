@@ -10,16 +10,19 @@
 import { IBaseStrategyWithMetadata, SpecificityLevel } from '../types';
 import { MedicationRequestContext } from '../../../types/MedicationRequestContext';
 import { SignatureInstruction } from '../../../types/SignatureInstruction';
+import { createTemplateEngine } from '../../templates/templates';
+import { TemplateDataBuilder } from '../../templates/TemplateDataBuilder';
 
 export class LiquidStrategy implements IBaseStrategyWithMetadata {
   readonly specificity = SpecificityLevel.DOSE_FORM;
+  private templateEngine = createTemplateEngine();
   
   readonly metadata = {
     id: 'liquid-strategy',
     name: 'Liquid Strategy',
-    description: 'Handles liquid medications with volume-based dosing',
+    description: 'Handles liquid medications with volume-based dosing using template engine',
     examples: ['Amoxicillin suspension', 'Ibuprofen liquid', 'Cough syrup'],
-    version: '1.0.0'
+    version: '2.0.0'
   };
 
   /**
@@ -32,49 +35,16 @@ export class LiquidStrategy implements IBaseStrategyWithMetadata {
   }
 
   /**
-   * Builds instruction for liquid medications
+   * Builds instruction for liquid medications using template engine
    */
   buildInstruction(context: MedicationRequestContext): SignatureInstruction {
     const { medication, dose, route, frequency } = context;
     
-    // Determine if multi-ingredient
-    const isMultiIngredient = this.isMultiIngredient(medication);
+    // Build template data with liquid-specific logic
+    const templateData = TemplateDataBuilder.forLiquid(context);
     
-    // Build text
-    const parts: string[] = ['Take'];
-    
-    // Format dose based on whether it's multi-ingredient
-    if (dose) {
-      let doseText = `${dose.value} ${dose.unit}`;
-      
-      // For multi-ingredient liquids, always use volume (mL)
-      if (isMultiIngredient && dose.unit !== 'mL' && dose.unit !== 'L') {
-        // Convert to mL if possible (would need strength ratio)
-        doseText += ' (volume-based dosing required for multi-ingredient formulation)';
-      }
-      
-      parts.push(doseText);
-    }
-    
-    // Add route - for oral liquids, just say "by mouth"
-    const routeLower = route?.toLowerCase() || '';
-    if (routeLower === 'orally' || routeLower === 'oral' || !route) {
-      parts.push('by mouth');
-    } else {
-      parts.push(`by ${route} route`);
-    }
-    
-    // Add frequency - convert to lowercase
-    if (frequency) {
-      parts.push(frequency.toLowerCase());
-    }
-    
-    // Add shake instruction for suspensions
-    if (medication?.doseForm?.toLowerCase().includes('suspension')) {
-      parts.push('(shake well before use)');
-    }
-    
-    const text = parts.join(' ') + '.';
+    // Render text using template engine
+    const text = this.templateEngine.render('LIQUID_DOSE_TEMPLATE', templateData);
     
     // Build FHIR-compliant instruction
     return {
@@ -90,9 +60,7 @@ export class LiquidStrategy implements IBaseStrategyWithMetadata {
         },
         doseQuantity: {
           value: dose.value,
-          unit: dose.unit,
-          system: 'http://unitsofmeasure.org',
-          code: this.mapUnitCode(dose.unit)
+          unit: dose.unit
         }
       }] : undefined,
       route: {
@@ -102,7 +70,7 @@ export class LiquidStrategy implements IBaseStrategyWithMetadata {
           display: route || 'Oral'
         }]
       },
-      additionalInstruction: medication?.doseForm?.toLowerCase().includes('suspension') ? [{
+      additionalInstructions: medication?.doseForm?.toLowerCase().includes('suspension') ? [{
         coding: [{
           system: 'http://snomed.info/sct',
           code: '129019007',
@@ -117,7 +85,7 @@ export class LiquidStrategy implements IBaseStrategyWithMetadata {
    * Explains the strategy's behavior
    */
   explain(): string {
-    return 'Liquid strategy: Handles volume-based dosing, multi-ingredient formulations, and adds shake instructions for suspensions';
+    return 'Liquid strategy: Uses template engine for internationalization-ready instructions with volume-based dosing and automatic shake instructions for suspensions';
   }
 
   /**
@@ -147,7 +115,7 @@ export class LiquidStrategy implements IBaseStrategyWithMetadata {
     if (!frequency) return undefined;
 
     // Common liquid medication frequencies
-    const timingMap: Record<string, any> = {
+    const timingMap: Record<string, { repeat: { frequency: number; period: number; periodUnit: string; when?: string[] } }> = {
       'every 4 hours': {
         repeat: {
           frequency: 6,

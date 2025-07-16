@@ -17,8 +17,9 @@ describe('Epic 3 Integration Tests', () => {
         name: 'Metformin 500mg',
         type: 'prescription',
         doseForm: 'Tablet',
-        code: { system: 'RxNorm', code: '6809' },
+        code: { coding: [{ display: 'Metformin' }] },
         ingredient: [{
+          name: 'Metformin',
           strengthRatio: {
             numerator: { value: 500, unit: 'mg' },
             denominator: { value: 1, unit: 'tablet' }
@@ -51,8 +52,9 @@ describe('Epic 3 Integration Tests', () => {
         name: 'Warfarin 5mg',
         type: 'prescription',
         doseForm: 'Tablet',
-        code: { system: 'RxNorm', code: '11289' },
+        code: { coding: [{ system: 'RxNorm', code: '11289', display: 'Warfarin' }] },
         ingredient: [{
+          name: 'Warfarin',
           strengthRatio: {
             numerator: { value: 5, unit: 'mg' },
             denominator: { value: 1, unit: 'tablet' }
@@ -78,8 +80,9 @@ describe('Epic 3 Integration Tests', () => {
         name: 'Amoxicillin Suspension 250mg/5mL',
         type: 'prescription',
         doseForm: 'Suspension',
-        code: { system: 'RxNorm', code: '308182' },
+        code: { coding: [{ system: 'RxNorm', code: '308182', display: 'Amoxicillin' }] },
         ingredient: [{
+          name: 'Amoxicillin',
           strengthRatio: {
             numerator: { value: 250, unit: 'mg' },
             denominator: { value: 5, unit: 'mL' }
@@ -106,8 +109,9 @@ describe('Epic 3 Integration Tests', () => {
         name: 'Testosterone Cypionate 200mg/mL',
         type: 'prescription',
         doseForm: 'Vial',
-        code: { system: 'RxNorm', code: '1716028' },
+        code: { coding: [{ display: 'Testosterone Cypionate' }] },
         ingredient: [{
+          name: 'Testosterone Cypionate',
           strengthRatio: {
             numerator: { value: 200, unit: 'mg' },
             denominator: { value: 1, unit: 'mL' }
@@ -135,14 +139,15 @@ describe('Epic 3 Integration Tests', () => {
         name: 'Estradiol Cream with Topiclick',
         type: 'prescription',
         doseForm: 'Cream',
-        code: { system: 'RxNorm', code: '205326' },
+        code: { coding: [{ display: 'Estradiol' }] },
         ingredient: [{
+          name: 'Estradiol',
           strengthRatio: {
             numerator: { value: 10, unit: 'mg' },
             denominator: { value: 1, unit: 'g' }
           }
         }],
-        dispenserInfo: { type: 'Topiclick' },
+        dispenserInfo: { type: 'Topiclick', unit: 'click', pluralUnit: 'clicks', conversionRatio: 4 },
         isActive: true,
         dosageConstraints: {}
       };
@@ -165,8 +170,9 @@ describe('Epic 3 Integration Tests', () => {
         name: 'Levothyroxine 50mcg',
         type: 'prescription',
         doseForm: 'Tablet',
-        code: { system: 'RxNorm', code: '314077' },
+        code: { coding: [{ display: 'Levothyroxine' }] },
         ingredient: [{
+          name: 'Levothyroxine',
           strengthRatio: {
             numerator: { value: 50, unit: 'mcg' },
             denominator: { value: 1, unit: 'tablet' }
@@ -215,10 +221,17 @@ describe('Epic 3 Integration Tests', () => {
       const dispatcher = new StrategyDispatcher(registry);
       
       const context = {
+        id: 'test-req',
+        timestamp: new Date().toISOString(),
+        patient: { id: 'test-patient', age: 30 },
         medication: {
           id: 'test-tablet',
           name: 'Test Tablet',
-          doseForm: 'Tablet'
+          type: 'medication' as const,
+          isActive: true,
+          doseForm: 'Tablet',
+          code: { coding: [{ display: 'Test Tablet' }] },
+          ingredient: [{ name: 'Test', strengthRatio: { numerator: { value: 100, unit: 'mg' }, denominator: { value: 1, unit: 'tablet' } } }]
         },
         dose: { value: 1, unit: 'tablet' },
         route: 'oral',
@@ -242,6 +255,8 @@ describe('Epic 3 Integration Tests', () => {
         type: 'prescription',
         doseForm: 'UnknownForm',
         isActive: true,
+        code: { coding: [{ display: 'Unknown' }] },
+        ingredient: [{ name: 'Unknown', strengthRatio: { numerator: { value: 1, unit: 'unit' }, denominator: { value: 1, unit: 'unit' } } }],
         dosageConstraints: {}
       };
 
@@ -264,7 +279,9 @@ describe('Epic 3 Integration Tests', () => {
         name: 'Performance Test Med',
         type: 'prescription',
         doseForm: 'Tablet',
+        code: { coding: [{ display: 'Performance Test' }] },
         ingredient: [{
+          name: 'Test Ingredient',
           strengthRatio: {
             numerator: { value: 100, unit: 'mg' },
             denominator: { value: 1, unit: 'tablet' }

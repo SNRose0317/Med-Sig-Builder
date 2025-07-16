@@ -142,6 +142,8 @@ export interface AdditionalInstruction {
  * and can be used in electronic health record systems.
  */
 export interface SignatureInstruction {
+  /** Unique identifier for this instruction */
+  id?: string;
   /** Sequence number for ordering */
   sequence?: number;
   /** Free text dosage instructions */

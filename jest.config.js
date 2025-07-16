@@ -5,7 +5,12 @@ export default {
   roots: ['<rootDir>/src'],
   testMatch: [
     '**/__tests__/**/*.+(ts|tsx|js)',
-    '**/?(*.)+(spec|test).+(ts|tsx|js)'
+    '**/?(*.)+(spec|test).+(ts|tsx|js)',
+    '**/*.golden.test.+(ts|tsx|js)'
+  ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    'test-helpers.ts'
   ],
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {

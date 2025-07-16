@@ -246,6 +246,8 @@ export interface MedicationProfile {
   sku?: string;
   /** Display position */
   position?: number;
+  /** Whether this is a controlled substance */
+  isControlled?: boolean;
 }
 
 /**
