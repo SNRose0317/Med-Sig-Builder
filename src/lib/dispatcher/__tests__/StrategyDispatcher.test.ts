@@ -1,0 +1,368 @@
+/**
+ * Tests for StrategyDispatcher
+ */
+
+import { StrategyDispatcher } from '../StrategyDispatcher';
+import { StrategyRegistry } from '../../registry/StrategyRegistry';
+import { IBaseStrategy, IModifierStrategy, SpecificityLevel } from '../../strategies/types';
+import { MedicationRequestContext } from '../../../types/MedicationRequestContext';
+import { SignatureInstruction } from '../../../types/SignatureInstruction';
+import { AmbiguousStrategyError, NoMatchingStrategyError } from '../errors';
+
+// Mock strategies for testing
+class MockBaseStrategy implements IBaseStrategy {
+  constructor(
+    public specificity: SpecificityLevel,
+    private matchCondition: (ctx: MedicationRequestContext) => boolean,
+    private instructionText: string = 'Mock instruction'
+  ) {}
+
+  matches(context: MedicationRequestContext): boolean {
+    return this.matchCondition(context);
+  }
+
+  buildInstruction(context: MedicationRequestContext): SignatureInstruction {
+    return { text: this.instructionText };
+  }
+
+  explain(): string {
+    return 'Mock strategy';
+  }
+}
+
+class MockModifierStrategy implements IModifierStrategy {
+  constructor(
+    public priority: number,
+    private applyCondition: (ctx: MedicationRequestContext) => boolean,
+    private modificationSuffix: string = ' [modified]'
+  ) {}
+
+  appliesTo(context: MedicationRequestContext): boolean {
+    return this.applyCondition(context);
+  }
+
+  modify(instruction: SignatureInstruction, context: MedicationRequestContext): SignatureInstruction {
+    return {
+      ...instruction,
+      text: (instruction.text || '') + this.modificationSuffix
+    };
+  }
+
+  explain(): string {
+    return 'Mock modifier';
+  }
+}
+
+describe('StrategyDispatcher', () => {
+  let registry: StrategyRegistry;
+  let dispatcher: StrategyDispatcher;
+
+  beforeEach(() => {
+    registry = new StrategyRegistry();
+    dispatcher = new StrategyDispatcher(registry);
+  });
+
+  describe('dispatch', () => {
+    it('should select the highest specificity matching strategy', () => {
+      // Register strategies with different specificities
+      const defaultStrategy = new MockBaseStrategy(
+        SpecificityLevel.DEFAULT,
+        () => true,
+        'Default instruction'
+      );
+      const doseFormStrategy = new MockBaseStrategy(
+        SpecificityLevel.DOSE_FORM,
+        ctx => ctx.medication?.doseForm === 'Tablet',
+        'Tablet instruction'
+      );
+      const medicationIdStrategy = new MockBaseStrategy(
+        SpecificityLevel.MEDICATION_ID,
+        ctx => ctx.medication?.id === 'med-123',
+        'Specific medication instruction'
+      );
+
+      registry.registerBase('default', defaultStrategy);
+      registry.registerBase('tablet', doseFormStrategy);
+      registry.registerBase('specific', medicationIdStrategy);
+
+      // Test with context matching specific medication
+      const context: MedicationRequestContext = {
+        medication: {
+          id: 'med-123',
+          name: 'Test Med',
+          doseForm: 'Tablet'
+        },
+        dose: { value: 1, unit: 'tablet' }
+      };
+
+      const result = dispatcher.dispatch(context);
+      expect(result.text).toBe('Specific medication instruction');
+    });
+
+    it('should throw AmbiguousStrategyError when multiple strategies have same specificity', () => {
+      // Register two strategies with same specificity that both match
+      const strategy1 = new MockBaseStrategy(
+        SpecificityLevel.DOSE_FORM,
+        ctx => ctx.medication?.doseForm === 'Tablet',
+        'Strategy 1'
+      );
+      const strategy2 = new MockBaseStrategy(
+        SpecificityLevel.DOSE_FORM,
+        ctx => ctx.medication?.doseForm === 'Tablet',
+        'Strategy 2'
+      );
+
+      registry.registerBase('strategy1', strategy1);
+      registry.registerBase('strategy2', strategy2);
+
+      const context: MedicationRequestContext = {
+        medication: {
+          id: 'med-123',
+          name: 'Test Med',
+          doseForm: 'Tablet'
+        },
+        dose: { value: 1, unit: 'tablet' }
+      };
+
+      expect(() => dispatcher.dispatch(context)).toThrow(AmbiguousStrategyError);
+    });
+
+    it('should throw NoMatchingStrategyError when no strategy matches', () => {
+      // Register strategy that won't match
+      const strategy = new MockBaseStrategy(
+        SpecificityLevel.DOSE_FORM,
+        ctx => ctx.medication?.doseForm === 'Tablet',
+        'Tablet only'
+      );
+      registry.registerBase('tablet', strategy);
+
+      const context: MedicationRequestContext = {
+        medication: {
+          id: 'med-123',
+          name: 'Test Med',
+          doseForm: 'Liquid'  // Won't match tablet strategy
+        },
+        dose: { value: 5, unit: 'mL' }
+      };
+
+      expect(() => dispatcher.dispatch(context)).toThrow(NoMatchingStrategyError);
+    });
+
+    it('should apply modifiers in priority order', () => {
+      // Base strategy
+      const baseStrategy = new MockBaseStrategy(
+        SpecificityLevel.DEFAULT,
+        () => true,
+        'Base'
+      );
+      registry.registerBase('base', baseStrategy);
+
+      // Modifiers with different priorities
+      const modifier1 = new MockModifierStrategy(30, () => true, ' [mod1]');
+      const modifier2 = new MockModifierStrategy(10, () => true, ' [mod2]');
+      const modifier3 = new MockModifierStrategy(20, () => true, ' [mod3]');
+
+      registry.registerModifier('mod1', modifier1);
+      registry.registerModifier('mod2', modifier2);
+      registry.registerModifier('mod3', modifier3);
+
+      const context: MedicationRequestContext = {
+        medication: { id: 'test', name: 'Test' }
+      };
+
+      const result = dispatcher.dispatch(context);
+      // Should apply in order: mod2 (10), mod3 (20), mod1 (30)
+      expect(result.text).toBe('Base [mod2] [mod3] [mod1]');
+    });
+
+    it('should only apply modifiers that match the context', () => {
+      const baseStrategy = new MockBaseStrategy(
+        SpecificityLevel.DEFAULT,
+        () => true,
+        'Base'
+      );
+      registry.registerBase('base', baseStrategy);
+
+      // Modifiers with different conditions
+      const modifier1 = new MockModifierStrategy(
+        10,
+        ctx => ctx.medication?.doseForm === 'Tablet',
+        ' [tablet]'
+      );
+      const modifier2 = new MockModifierStrategy(
+        20,
+        ctx => ctx.medication?.doseForm === 'Liquid',
+        ' [liquid]'
+      );
+
+      registry.registerModifier('mod1', modifier1);
+      registry.registerModifier('mod2', modifier2);
+
+      const context: MedicationRequestContext = {
+        medication: {
+          id: 'test',
+          name: 'Test',
+          doseForm: 'Tablet'
+        }
+      };
+
+      const result = dispatcher.dispatch(context);
+      // Should only apply tablet modifier
+      expect(result.text).toBe('Base [tablet]');
+    });
+  });
+
+  describe('preview', () => {
+    it('should return preview without executing strategies', () => {
+      const baseStrategy = new MockBaseStrategy(
+        SpecificityLevel.DOSE_FORM,
+        ctx => ctx.medication?.doseForm === 'Tablet'
+      );
+      const modifier = new MockModifierStrategy(
+        10,
+        ctx => ctx.medication?.doseForm === 'Tablet'
+      );
+
+      registry.registerBase('tablet', baseStrategy);
+      registry.registerModifier('mod', modifier);
+
+      const context: MedicationRequestContext = {
+        medication: {
+          id: 'test',
+          name: 'Test',
+          doseForm: 'Tablet'
+        }
+      };
+
+      const preview = dispatcher.preview(context);
+      expect(preview.wouldSucceed).toBe(true);
+      expect(preview.baseStrategy).toBe('MockBaseStrategy');
+      expect(preview.modifiers).toEqual(['mod']);
+    });
+
+    it('should indicate failure in preview', () => {
+      // No strategies registered
+      const context: MedicationRequestContext = {
+        medication: { id: 'test', name: 'Test' }
+      };
+
+      const preview = dispatcher.preview(context);
+      expect(preview.wouldSucceed).toBe(false);
+      expect(preview.error).toBe('No matching strategy found');
+    });
+  });
+
+  describe('audit logging', () => {
+    it('should record audit entries for successful dispatches', () => {
+      const baseStrategy = new MockBaseStrategy(
+        SpecificityLevel.DEFAULT,
+        () => true
+      );
+      registry.registerBase('default', baseStrategy);
+
+      const context: MedicationRequestContext = {
+        medication: { id: 'test', name: 'Test' }
+      };
+
+      dispatcher.dispatch(context);
+
+      const auditLog = dispatcher.getAuditLog();
+      expect(auditLog).toHaveLength(1);
+      expect(auditLog[0].selectedStrategy).toBe('MockBaseStrategy');
+      expect(auditLog[0].executionTimeMs).toBeGreaterThan(0);
+    });
+
+    it('should record failed dispatches in audit', () => {
+      // No strategies registered
+      const context: MedicationRequestContext = {
+        medication: { id: 'test', name: 'Test' }
+      };
+
+      try {
+        dispatcher.dispatch(context);
+      } catch (e) {
+        // Expected to fail
+      }
+
+      const auditLog = dispatcher.getAuditLog();
+      expect(auditLog).toHaveLength(1);
+      expect(auditLog[0].selectedStrategy).toBeNull();
+    });
+
+    it('should limit audit log size', () => {
+      const baseStrategy = new MockBaseStrategy(
+        SpecificityLevel.DEFAULT,
+        () => true
+      );
+      registry.registerBase('default', baseStrategy);
+
+      const context: MedicationRequestContext = {
+        medication: { id: 'test', name: 'Test' }
+      };
+
+      // Dispatch many times
+      for (let i = 0; i < 1500; i++) {
+        dispatcher.dispatch(context);
+      }
+
+      const auditLog = dispatcher.getAuditLog();
+      expect(auditLog.length).toBeLessThanOrEqual(1000);
+    });
+  });
+
+  describe('performance stats', () => {
+    it('should calculate performance statistics correctly', () => {
+      const baseStrategy = new MockBaseStrategy(
+        SpecificityLevel.DEFAULT,
+        () => true
+      );
+      registry.registerBase('default', baseStrategy);
+
+      const context: MedicationRequestContext = {
+        medication: { id: 'test', name: 'Test' }
+      };
+
+      // Make several dispatches
+      for (let i = 0; i < 100; i++) {
+        dispatcher.dispatch(context);
+      }
+
+      const stats = dispatcher.getPerformanceStats();
+      expect(stats.count).toBe(100);
+      expect(stats.avgTimeMs).toBeGreaterThan(0);
+      expect(stats.p50Ms).toBeGreaterThan(0);
+      expect(stats.p95Ms).toBeGreaterThanOrEqual(stats.p50Ms);
+      expect(stats.p99Ms).toBeGreaterThanOrEqual(stats.p95Ms);
+    });
+  });
+
+  describe('explainSelection', () => {
+    it('should provide detailed explanation of selection', () => {
+      const baseStrategy = new MockBaseStrategy(
+        SpecificityLevel.DOSE_FORM,
+        ctx => ctx.medication?.doseForm === 'Tablet'
+      );
+      const modifier = new MockModifierStrategy(
+        10,
+        ctx => ctx.medication?.doseForm === 'Tablet'
+      );
+
+      registry.registerBase('tablet', baseStrategy);
+      registry.registerModifier('mod', modifier);
+
+      const context: MedicationRequestContext = {
+        medication: {
+          id: 'test',
+          name: 'Test Medication',
+          doseForm: 'Tablet'
+        }
+      };
+
+      const explanation = dispatcher.explainSelection(context);
+      expect(explanation).toContain('Test Medication');
+      expect(explanation).toContain('Tablet');
+      expect(explanation).toContain('MockBaseStrategy');
+      expect(explanation).toContain('mod');
+    });
+  });
+});
