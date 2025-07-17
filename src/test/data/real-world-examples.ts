@@ -22,8 +22,8 @@ export const REAL_WORLD_TABLET_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.metformin500,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
-      frequency: 'twice daily',
+      route: 'Orally',
+      frequency: 'Twice Daily',
       specialInstructions: 'with food'
     },
     expected: {
@@ -43,8 +43,8 @@ export const REAL_WORLD_TABLET_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.metformin500,
       dose: { value: 2, unit: 'tablet' },
-      route: 'by mouth',
-      frequency: 'twice daily',
+      route: 'Orally',
+      frequency: 'Twice Daily',
       specialInstructions: 'with food'
     },
     expected: {
@@ -64,8 +64,8 @@ export const REAL_WORLD_TABLET_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.lisinopril10,
       dose: { value: 0.5, unit: 'tablet' },
-      route: 'by mouth',
-      frequency: 'once daily'
+      route: 'Orally',
+      frequency: 'Once Daily'
     },
     expected: {
       humanReadable: 'Take 1/2 tablet by mouth once daily.'
@@ -84,8 +84,8 @@ export const REAL_WORLD_TABLET_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.levothyroxine25,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
-      frequency: 'once daily',
+      route: 'Orally',
+      frequency: 'Once Daily',
       specialInstructions: 'on empty stomach 30 minutes before breakfast'
     },
     expected: {
@@ -105,8 +105,8 @@ export const REAL_WORLD_TABLET_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.omeprazole20,
       dose: { value: 1, unit: 'capsule' },
-      route: 'by mouth',
-      frequency: 'once daily',
+      route: 'Orally',
+      frequency: 'Once Daily',
       specialInstructions: 'before breakfast'
     },
     expected: {
@@ -131,8 +131,8 @@ export const REAL_WORLD_LIQUID_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.liquids.amoxicillinSuspension,
       dose: { value: 5, unit: 'mL' },
-      route: 'by mouth',
-      frequency: 'three times daily',
+      route: 'Orally',
+      frequency: 'Three Times Daily',
       specialInstructions: 'shake well before use'
     },
     expected: {
@@ -152,8 +152,8 @@ export const REAL_WORLD_LIQUID_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.liquids.amoxicillinSuspension,
       dose: { value: 250, unit: 'mg' },
-      route: 'by mouth',
-      frequency: 'twice daily',
+      route: 'Orally',
+      frequency: 'Twice Daily',
       specialInstructions: 'with food'
     },
     expected: {
@@ -173,7 +173,7 @@ export const REAL_WORLD_LIQUID_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.liquids.acetaminophenSolution,
       dose: { value: 2.5, unit: 'mL' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'every 4 hours as needed',
       specialInstructions: 'for fever'
     },
@@ -194,8 +194,8 @@ export const REAL_WORLD_LIQUID_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.liquids.insulin,
       dose: { value: 10, unit: 'units' },
-      route: 'subcutaneously',
-      frequency: 'once daily',
+      route: 'Subcutaneous',
+      frequency: 'Once Daily',
       specialInstructions: 'at bedtime, rotate injection sites'
     },
     expected: {
@@ -220,8 +220,8 @@ export const REAL_WORLD_INJECTABLE_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.injectables.testosteroneCypionate,
       dose: { value: 100, unit: 'mg' },
-      route: 'intramuscularly',
-      frequency: 'once weekly',
+      route: 'Intramuscularly',
+      frequency: 'Once Per Week',
       specialInstructions: 'rotate injection sites'
     },
     expected: {
@@ -241,8 +241,8 @@ export const REAL_WORLD_INJECTABLE_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.injectables.testosteroneCypionate,
       dose: { value: 200, unit: 'mg' },
-      route: 'intramuscularly',
-      frequency: 'every 2 weeks'
+      route: 'Intramuscularly',
+      frequency: 'Once Every Two Weeks'
     },
     expected: {
       humanReadable: 'Inject 200 mg, as 1.00 mL intramuscularly every 2 weeks.'
@@ -261,7 +261,7 @@ export const REAL_WORLD_INJECTABLE_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.injectables.morphineInjection,
       dose: { value: 5, unit: 'mg' },
-      route: 'intramuscularly',
+      route: 'Intramuscularly',
       frequency: 'every 4 hours as needed',
       specialInstructions: 'for severe pain'
     },
@@ -287,8 +287,8 @@ export const REAL_WORLD_TOPICAL_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.topicals.hormoneCreams,
       dose: { value: 4, unit: 'click' },
-      route: 'topically',
-      frequency: 'twice daily',
+      route: 'Topically',
+      frequency: 'Twice Daily',
       specialInstructions: 'using Topiclick dispenser'
     },
     expected: {
@@ -308,8 +308,8 @@ export const REAL_WORLD_TOPICAL_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.topicals.hormoneCreams,
       dose: { value: 8, unit: 'click' },
-      route: 'topically',
-      frequency: 'once daily',
+      route: 'Topically',
+      frequency: 'Once Daily',
       specialInstructions: 'using Topiclick dispenser, apply to inner wrist'
     },
     expected: {
@@ -329,8 +329,8 @@ export const REAL_WORLD_TOPICAL_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.topicals.hydrocortisoneCream,
       dose: { value: 1, unit: 'application' },
-      route: 'topically',
-      frequency: 'twice daily',
+      route: 'Topically',
+      frequency: 'Twice Daily',
       specialInstructions: 'to affected area only, thin layer'
     },
     expected: {
@@ -355,8 +355,8 @@ export const REAL_WORLD_MULTI_INGREDIENT_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.combinationHormone,
       dose: { value: 6, unit: 'click' },
-      route: 'topically',
-      frequency: 'once daily',
+      route: 'Topically',
+      frequency: 'Once Daily',
       specialInstructions: 'using Topiclick dispenser'
     },
     expected: {
@@ -376,8 +376,8 @@ export const REAL_WORLD_MULTI_INGREDIENT_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.combinationTablet,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
-      frequency: 'once daily'
+      route: 'Orally',
+      frequency: 'Once Daily'
     },
     expected: {
       humanReadable: 'Take 1 tablet by mouth once daily.'
@@ -401,8 +401,8 @@ export const REAL_WORLD_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.edgeCases.highDoseVitamin,
       dose: { value: 50000, unit: 'IU' },
-      route: 'by mouth',
-      frequency: 'once weekly',
+      route: 'Orally',
+      frequency: 'Once Per Week',
       specialInstructions: 'for 8 weeks'
     },
     expected: {
@@ -422,8 +422,8 @@ export const REAL_WORLD_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.edgeCases.lowDosePediatric,
       dose: { value: 0.05, unit: 'mL' },
-      route: 'by mouth',
-      frequency: 'twice daily',
+      route: 'Orally',
+      frequency: 'Twice Daily',
       specialInstructions: 'use oral syringe for accurate measurement'
     },
     expected: {
@@ -443,8 +443,8 @@ export const REAL_WORLD_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.lisinopril10,
       dose: { value: 1.5, unit: 'tablet' },
-      route: 'by mouth',
-      frequency: 'once daily'
+      route: 'Orally',
+      frequency: 'Once Daily'
     },
     expected: {
       humanReadable: 'Take 1 and 1/2 tablets by mouth once daily.'
@@ -469,7 +469,7 @@ export const ADVANCED_REAL_WORLD_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.sumatriptan100mg,
       doseRange: { minValue: 1, maxValue: 2, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'as needed',
       specialInstructions: 'for migraine, may repeat once after 2 hours if needed',
       maxDailyDose: { value: 3, unit: 'tablet' }
@@ -491,7 +491,7 @@ export const ADVANCED_REAL_WORLD_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.oxycodone5mg,
       doseRange: { minValue: 1, maxValue: 2, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequencyRange: { minFrequency: 1, maxFrequency: 1, period: 4, maxPeriod: 6, periodUnit: 'h' },
       specialInstructions: 'for breakthrough pain',
       maxDailyDose: { value: 8, unit: 'tablet' },
@@ -514,7 +514,7 @@ export const ADVANCED_REAL_WORLD_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.lorazepam1mg,
       doseRange: { minValue: 0.5, maxValue: 2, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'as needed',
       specialInstructions: 'for anxiety attacks',
       maxDailyDose: { value: 6, unit: 'tablet' }
@@ -536,7 +536,7 @@ export const ADVANCED_REAL_WORLD_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.liquids.acetaminophenSolution,
       doseRange: { minValue: 2.5, maxValue: 5, unit: 'mL' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'every 4-6 hours as needed',
       specialInstructions: 'for fever over 100.4°F',
       maxDailyDose: { value: 20, unit: 'mL' }
@@ -558,7 +558,7 @@ export const ADVANCED_REAL_WORLD_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.zolpidem10mg,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequencyRange: { minFrequency: 1, maxFrequency: 1, period: 1, maxPeriod: 3, periodUnit: 'night' },
       specialInstructions: 'at bedtime for sleep initiation',
       maxDailyDose: { value: 1, unit: 'tablet' }
@@ -581,8 +581,8 @@ export const ADVANCED_REAL_WORLD_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.combinationHormone,
       dose: { value: 6, unit: 'click' },
-      route: 'topically',
-      frequency: 'once daily',
+      route: 'Topically',
+      frequency: 'Once Daily',
       specialInstructions: 'apply to inner forearms, rotate sites'
     },
     expected: {
@@ -602,8 +602,8 @@ export const ADVANCED_REAL_WORLD_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.tripleTopical,
       dose: { value: 2, unit: 'click' },
-      route: 'topically',
-      frequency: 'twice daily',
+      route: 'Topically',
+      frequency: 'Twice Daily',
       specialInstructions: 'to affected areas only, wash hands after application'
     },
     expected: {
@@ -623,8 +623,8 @@ export const ADVANCED_REAL_WORLD_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.combinationTablet,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
-      frequency: 'once daily',
+      route: 'Orally',
+      frequency: 'Once Daily',
       specialInstructions: 'in the morning with or without food'
     },
     expected: {
@@ -644,8 +644,8 @@ export const ADVANCED_REAL_WORLD_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.injectableCompound,
       dose: { value: 1, unit: 'mL' },
-      route: 'intramuscularly',
-      frequency: 'once weekly',
+      route: 'Intramuscularly',
+      frequency: 'Once Per Week',
       specialInstructions: 'deep IM injection, rotate gluteal sites'
     },
     expected: {
@@ -666,7 +666,7 @@ export const ADVANCED_REAL_WORLD_EXAMPLES: Partial<GoldenTestCase>[] = [
       medication: MEDICATION_FIXTURES.multiIngredient.sublingualCompound,
       dose: { value: 1, unit: 'tablet' },
       route: 'sublingually',
-      frequency: 'twice daily',
+      frequency: 'Twice Daily',
       specialInstructions: 'hold under tongue for 2 minutes before swallowing'
     },
     expected: {
@@ -687,12 +687,12 @@ export const ADVANCED_REAL_WORLD_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.prednisone10mg,
       taperingSchedule: [
-        { phase: 1, dose: { value: 4, unit: 'tablet' }, duration: { value: 3, unit: 'day' }, frequency: 'once daily' },
-        { phase: 2, dose: { value: 3, unit: 'tablet' }, duration: { value: 3, unit: 'day' }, frequency: 'once daily' },
-        { phase: 3, dose: { value: 2, unit: 'tablet' }, duration: { value: 3, unit: 'day' }, frequency: 'once daily' },
-        { phase: 4, dose: { value: 1, unit: 'tablet' }, duration: { value: 3, unit: 'day' }, frequency: 'once daily' }
+        { phase: 1, dose: { value: 4, unit: 'tablet' }, duration: { value: 3, unit: 'day' }, frequency: 'Once Daily' },
+        { phase: 2, dose: { value: 3, unit: 'tablet' }, duration: { value: 3, unit: 'day' }, frequency: 'Once Daily' },
+        { phase: 3, dose: { value: 2, unit: 'tablet' }, duration: { value: 3, unit: 'day' }, frequency: 'Once Daily' },
+        { phase: 4, dose: { value: 1, unit: 'tablet' }, duration: { value: 3, unit: 'day' }, frequency: 'Once Daily' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'with food to reduce stomach upset'
     },
     expected: {
@@ -712,12 +712,12 @@ export const ADVANCED_REAL_WORLD_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.chlordiazepoxide25mg,
       taperingSchedule: [
-        { phase: 1, dose: { value: 2, unit: 'tablet' }, duration: { value: 2, unit: 'day' }, frequency: 'four times daily' },
-        { phase: 2, dose: { value: 1, unit: 'tablet' }, duration: { value: 2, unit: 'day' }, frequency: 'four times daily' },
+        { phase: 1, dose: { value: 2, unit: 'tablet' }, duration: { value: 2, unit: 'day' }, frequency: 'Four Times Daily' },
+        { phase: 2, dose: { value: 1, unit: 'tablet' }, duration: { value: 2, unit: 'day' }, frequency: 'Four Times Daily' },
         { phase: 3, dose: { value: 1, unit: 'tablet' }, duration: { value: 2, unit: 'day' }, frequency: 'twice daily' },
-        { phase: 4, dose: { value: 1, unit: 'tablet' }, duration: { value: 2, unit: 'day' }, frequency: 'once daily' }
+        { phase: 4, dose: { value: 1, unit: 'tablet' }, duration: { value: 2, unit: 'day' }, frequency: 'Once Daily' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'monitor for withdrawal symptoms and seizures'
     },
     expected: {
@@ -737,11 +737,11 @@ export const ADVANCED_REAL_WORLD_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.sertraline50mg,
       taperingSchedule: [
-        { phase: 1, dose: { value: 1, unit: 'tablet' }, duration: { value: 2, unit: 'week' }, frequency: 'once daily' },
-        { phase: 2, dose: { value: 0.5, unit: 'tablet' }, duration: { value: 2, unit: 'week' }, frequency: 'once daily' },
+        { phase: 1, dose: { value: 1, unit: 'tablet' }, duration: { value: 2, unit: 'week' }, frequency: 'Once Daily' },
+        { phase: 2, dose: { value: 0.5, unit: 'tablet' }, duration: { value: 2, unit: 'week' }, frequency: 'Once Daily' },
         { phase: 3, dose: { value: 0.5, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'every other day' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'monitor mood and discontinuation symptoms'
     },
     expected: {
@@ -764,9 +764,9 @@ export const ADVANCED_REAL_WORLD_EXAMPLES: Partial<GoldenTestCase>[] = [
         { phase: 1, dose: { value: 2, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'three times daily' },
         { phase: 2, dose: { value: 1, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'three times daily' },
         { phase: 3, dose: { value: 1, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'twice daily' },
-        { phase: 4, dose: { value: 1, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'once daily' }
+        { phase: 4, dose: { value: 1, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'Once Daily' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'monitor for return of neuropathy symptoms'
     },
     expected: {
@@ -786,12 +786,12 @@ export const ADVANCED_REAL_WORLD_EXAMPLES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.methadone10mg,
       taperingSchedule: [
-        { phase: 1, dose: { value: 5, unit: 'tablet' }, duration: { value: 1, unit: 'month' }, frequency: 'once daily' },
-        { phase: 2, dose: { value: 4, unit: 'tablet' }, duration: { value: 1, unit: 'month' }, frequency: 'once daily' },
-        { phase: 3, dose: { value: 3, unit: 'tablet' }, duration: { value: 1, unit: 'month' }, frequency: 'once daily' },
-        { phase: 4, dose: { value: 2, unit: 'tablet' }, duration: { value: 1, unit: 'month' }, frequency: 'once daily' }
+        { phase: 1, dose: { value: 5, unit: 'tablet' }, duration: { value: 1, unit: 'month' }, frequency: 'Once Daily' },
+        { phase: 2, dose: { value: 4, unit: 'tablet' }, duration: { value: 1, unit: 'month' }, frequency: 'Once Daily' },
+        { phase: 3, dose: { value: 3, unit: 'tablet' }, duration: { value: 1, unit: 'month' }, frequency: 'Once Daily' },
+        { phase: 4, dose: { value: 2, unit: 'tablet' }, duration: { value: 1, unit: 'month' }, frequency: 'Once Daily' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'supervised dispensing, monitor withdrawal symptoms'
     },
     expected: {

@@ -22,7 +22,7 @@ export const FRACTIONAL_DOSE_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.levothyroxine25, // NONE scoring
       dose: { value: 0.25, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -38,7 +38,7 @@ export const FRACTIONAL_DOSE_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.metformin500, // HALF scoring
       dose: { value: 0.25, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -54,7 +54,7 @@ export const FRACTIONAL_DOSE_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.lisinopril10, // QUARTER scoring
       dose: { value: 0.125, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -70,7 +70,7 @@ export const FRACTIONAL_DOSE_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.lisinopril10, // QUARTER scoring
       dose: { value: 0.25, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -86,7 +86,7 @@ export const FRACTIONAL_DOSE_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.lisinopril10,
       dose: { value: 2.75, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'twice daily'
     },
     expected: {
@@ -155,7 +155,7 @@ export const UNIT_CONVERSION_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.liquids.amoxicillinSuspension,
       dose: { value: 250, unit: 'mg' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'twice daily'
     },
     expected: {
@@ -192,7 +192,7 @@ export const EXTREME_DOSE_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.edgeCases.lowDosePediatric,
       dose: { value: 0.05, unit: 'mL' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -208,7 +208,7 @@ export const EXTREME_DOSE_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.edgeCases.highDoseVitamin,
       dose: { value: 50000, unit: 'IU' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once weekly'
     },
     expected: {
@@ -224,7 +224,7 @@ export const EXTREME_DOSE_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.edgeCases.lowDosePediatric,
       dose: { value: 0.001, unit: 'mg' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -240,7 +240,7 @@ export const EXTREME_DOSE_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.liquids.acetaminophenSolution,
       dose: { value: 50, unit: 'mL' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'twice daily'
     },
     expected: {
@@ -277,7 +277,7 @@ export const MULTI_INGREDIENT_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.combinationTablet,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -293,7 +293,7 @@ export const MULTI_INGREDIENT_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.combinationTablet,
       dose: { value: 0.5, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -314,7 +314,7 @@ export const ROUTE_FREQUENCY_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.topicals.hydrocortisoneCream,
       dose: { value: 1, unit: 'application' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -347,7 +347,7 @@ export const ROUTE_FREQUENCY_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.metformin500,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'every 2 hours'
     },
     expected: {
@@ -363,7 +363,7 @@ export const ROUTE_FREQUENCY_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.edgeCases.highDoseVitamin,
       dose: { value: 50000, unit: 'IU' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once monthly'
     },
     expected: {
@@ -384,7 +384,7 @@ export const RANGE_DOSING_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.metformin500,
       dose: { value: 1, unit: 'tablet', maxValue: 4 },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'twice daily'
     },
     expected: {
@@ -400,7 +400,7 @@ export const RANGE_DOSING_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.lisinopril10,
       dose: { value: 0.5, unit: 'tablet', maxValue: 1.5 },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -416,7 +416,7 @@ export const RANGE_DOSING_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.liquids.amoxicillinSuspension,
       dose: { value: 2.5, unit: 'mL', maxValue: 5 },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'three times daily'
     },
     expected: {
@@ -432,7 +432,7 @@ export const RANGE_DOSING_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.metformin500,
       dose: { value: 2, unit: 'tablet', maxValue: 1 },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'twice daily'
     },
     expected: {
@@ -453,7 +453,7 @@ export const SPECIAL_INSTRUCTION_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.metformin500,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'twice daily',
       specialInstructions: 'with food; do not crush'
     },
@@ -470,7 +470,7 @@ export const SPECIAL_INSTRUCTION_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.levothyroxine25,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily',
       specialInstructions: 'with food; on empty stomach'
     },
@@ -510,7 +510,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.ibuprofen200,
       doseRange: { minValue: 0, maxValue: 2, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'as needed'
     },
     expected: {
@@ -526,7 +526,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.ibuprofen200,
       doseRange: { minValue: -1, maxValue: 2, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'as needed'
     },
     expected: {
@@ -542,7 +542,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.ibuprofen200,
       doseRange: { minValue: 1, maxValue: 20, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'as needed',
       maxDailyDose: { value: 25, unit: 'tablet' }
     },
@@ -559,7 +559,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.ibuprofen200,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequencyRange: { minFrequency: 0, maxFrequency: 4, period: 1, periodUnit: 'd' }
     },
     expected: {
@@ -575,7 +575,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.ibuprofen200,
       doseRange: { minValue: 5, maxValue: 8, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'as needed'
     },
     expected: {
@@ -591,7 +591,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.ibuprofen200,
       doseRange: { minValue: 2, maxValue: 4, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequencyRange: { minFrequency: 1, maxFrequency: 6, period: 1, periodUnit: 'd' },
       maxDailyDose: { value: 8, unit: 'tablet' }
     },
@@ -625,7 +625,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.lorazepam1mg,
       doseRange: { minValue: 0.25, maxValue: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'as needed',
       maxDailyDose: { value: 3, unit: 'tablet' }
     },
@@ -642,7 +642,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.oxycodone5mg,
       doseRange: { minValue: 1, maxValue: 2, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequencyRange: { minFrequency: 1, maxFrequency: 1, period: 4, maxPeriod: 6, periodUnit: 'h' },
       maxDailyDose: { value: 8, unit: 'tablet' },
       maxAdministrationsPerDay: 4
@@ -660,7 +660,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.ibuprofen200,
       doseRange: { minValue: 2, maxValue: 2, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'as needed'
     },
     expected: {
@@ -677,7 +677,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.singleIngredient,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'twice daily'
     },
     expected: {
@@ -709,7 +709,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.mismatchedUnits,
       dose: { value: 2, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -725,7 +725,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.manyIngredients,
       dose: { value: 1, unit: 'capsule' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -773,7 +773,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.combinationTablet,
       dose: { value: 0.5, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -789,7 +789,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.liquidCompound,
       dose: { value: 200, unit: 'mg' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'twice daily'
     },
     expected: {
@@ -805,7 +805,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.duplicateNames,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -821,7 +821,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.specialCharacters,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -1025,7 +1025,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     category: 'edge-case',
     input: {
       medication: MEDICATION_FIXTURES.tablets.metformin500,
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'twice daily'
     },
     expected: {
@@ -1071,7 +1071,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.metformin500,
       dose: { value: 5, unit: 'mL' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'twice daily'
     },
     expected: {
@@ -1087,7 +1087,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.topicals.hydrocortisoneCream,
       dose: { value: 1, unit: 'application' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'twice daily'
     },
     expected: {
@@ -1103,7 +1103,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.edgeCases.emptyName,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -1119,7 +1119,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: null,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -1135,7 +1135,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.metformin500,
       dose: { value: Infinity, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -1151,7 +1151,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.metformin500,
       dose: { value: NaN, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -1167,7 +1167,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.metformin500,
       dose: { value: 1, unit: '' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -1199,7 +1199,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.metformin500,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: ''
     },
     expected: {
@@ -1215,7 +1215,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.metformin500,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily',
       specialInstructions: { invalid: 'object' }
     },
@@ -1232,7 +1232,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.edgeCases.veryLongName,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -1248,7 +1248,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.edgeCases.unicodeCharacters,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -1264,7 +1264,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.metformin500,
       dose: { value: 0.1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -1280,7 +1280,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.metformin500,
       dose: { value: 10, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -1296,7 +1296,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.metformin500,
       dose: { value: 1.3, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -1312,7 +1312,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.edgeCases.circularReference,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -1328,7 +1328,7 @@ export const ADVANCED_BUILDER_EDGE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.edgeCases.noIngredients,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {

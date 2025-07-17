@@ -210,6 +210,22 @@ export const frequencies: Record<string, Frequency> = {
       period: 1,
       periodUnit: "mo"
     }
+  },
+  "Every 4 Hours As Needed": {
+    id: "freq-14",
+    name: "Every 4 Hours As Needed",
+    count: 6,
+    frequency: 1,
+    period: 4,
+    periodUnit: "h",
+    humanReadable: "every 4 hours as needed",
+    abbreviation: "Q4H PRN",
+    fhirMapping: {
+      frequency: 1,
+      period: 4,
+      periodUnit: "h",
+      asNeeded: true
+    }
   }
 };
 
@@ -355,6 +371,21 @@ export const routes: Record<string, Route> = {
     humanReadable: "vaginally",
     fhirCode: "PV",
     requiresSpecialInstructions: false
+  },
+  "Inhaled": {
+    id: "route-11",
+    name: "Inhaled",
+    code: "INHAL",
+    description: "Administration by inhalation",
+    applicableForms: ["Inhaler", "Nebulizer", "Solution"],
+    humanReadable: "by inhalation",
+    fhirCode: "INHAL",
+    requiresSpecialInstructions: false,
+    verbMap: {
+      "Inhaler": "Inhale",
+      "Nebulizer": "Inhale",
+      "Solution": "Inhale"
+    }
   }
 };
 
@@ -362,6 +393,19 @@ export const routeOptions = Object.keys(routes).map(key => ({
   value: key,
   label: key
 }));
+
+// Route lookup helper
+const routeLookup = new Map<string, string>();
+Object.keys(routes).forEach(key => {
+  routeLookup.set(key.toLowerCase(), key);
+});
+
+// Helper function to get route by any case
+export const getRoute = (value: string): Route | undefined => {
+  if (!value) return undefined;
+  const normalizedKey = routeLookup.get(value.toLowerCase());
+  return normalizedKey ? routes[normalizedKey] : undefined;
+};
 
 // Dose Form Definitions
 export interface DoseForm {

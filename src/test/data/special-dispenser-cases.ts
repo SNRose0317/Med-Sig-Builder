@@ -770,7 +770,7 @@ export const INHALER_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.inhalers.albuterolMDI,
       dose: { value: 2, unit: 'puff' },
-      route: 'inhaled',
+      route: 'Inhaled',
       frequency: 'every 4 hours as needed',
       specialInstructions: 'for shortness of breath'
     },
@@ -791,7 +791,7 @@ export const INHALER_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.inhalers.fluticasoneMDI,
       dose: { value: 1, unit: 'puff' },
-      route: 'inhaled',
+      route: 'Inhaled',
       frequency: 'twice daily'
     },
     expected: {
@@ -811,7 +811,7 @@ export const INHALER_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.inhalers.albuterolMDI,
       dose: { value: 2, unit: 'puff' },
-      route: 'inhaled',
+      route: 'Inhaled',
       frequency: 'every 6 hours as needed',
       specialInstructions: 'use with spacer device'
     },
@@ -832,7 +832,7 @@ export const INHALER_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.inhalers.fluticasoneMDI,
       dose: { value: 2, unit: 'puff' },
-      route: 'inhaled',
+      route: 'Inhaled',
       frequency: 'twice daily',
       specialInstructions: 'prime with 4 test sprays before first use'
     },
@@ -853,7 +853,7 @@ export const INHALER_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.inhalers.albuterolMDI,
       dose: { value: 1, unit: 'puff' },
-      route: 'inhaled',
+      route: 'Inhaled',
       frequency: 'every 4 hours as needed',
       specialInstructions: 'shake well before each use'
     },
@@ -875,7 +875,7 @@ export const INHALER_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.inhalers.tiotropiumDPI,
       dose: { value: 1, unit: 'inhalation' },
-      route: 'inhaled',
+      route: 'Inhaled',
       frequency: 'once daily'
     },
     expected: {
@@ -895,7 +895,7 @@ export const INHALER_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.inhalers.tiotropiumDPI,
       dose: { value: 1, unit: 'inhalation' },
-      route: 'inhaled',
+      route: 'Inhaled',
       frequency: 'once daily',
       specialInstructions: 'load dose by rotating grip'
     },
@@ -916,7 +916,7 @@ export const INHALER_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.inhalers.tiotropiumDPI,
       dose: { value: 1, unit: 'inhalation' },
-      route: 'inhaled',
+      route: 'Inhaled',
       frequency: 'once daily',
       specialInstructions: 'keep device dry, close cap after use'
     },
@@ -937,7 +937,7 @@ export const INHALER_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.inhalers.tiotropiumDPI,
       dose: { value: 1, unit: 'inhalation' },
-      route: 'inhaled',
+      route: 'Inhaled',
       frequency: 'once daily',
       specialInstructions: 'device contains 30 doses, replace when empty'
     },
@@ -958,7 +958,7 @@ export const INHALER_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.inhalers.tiotropiumDPI,
       dose: { value: 1, unit: 'inhalation' },
-      route: 'inhaled',
+      route: 'Inhaled',
       frequency: 'once daily',
       specialInstructions: 'breathe in fast and deep'
     },
@@ -986,7 +986,7 @@ export const OTHER_DEVICE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.nebulizers.albuterolNebulizer,
       dose: { value: 2.5, unit: 'mL' },
-      route: 'inhaled',
+      route: 'Inhaled',
       frequency: 'every 6 hours as needed',
       specialInstructions: 'via nebulizer until mist stops'
     },
@@ -1007,7 +1007,7 @@ export const OTHER_DEVICE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.nebulizers.albuterolNebulizer,
       dose: { value: 2.5, unit: 'mL' },
-      route: 'inhaled',
+      route: 'Inhaled',
       frequency: 'three times daily',
       specialInstructions: 'clean nebulizer cup after each use'
     },
@@ -1028,7 +1028,7 @@ export const OTHER_DEVICE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.nebulizers.albuterolNebulizer,
       dose: { value: 2.5, unit: 'mL' },
-      route: 'inhaled',
+      route: 'Inhaled',
       frequency: 'twice daily',
       specialInstructions: 'mix with 2.5 mL normal saline'
     },
@@ -1049,7 +1049,7 @@ export const OTHER_DEVICE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.nebulizers.albuterolNebulizer,
       dose: { value: 2.5, unit: 'mL' },
-      route: 'inhaled',
+      route: 'Inhaled',
       frequency: 'every 4 hours as needed',
       specialInstructions: 'treatment takes 10-15 minutes'
     },
@@ -1070,7 +1070,7 @@ export const OTHER_DEVICE_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.nebulizers.albuterolNebulizer,
       dose: { value: 2.5, unit: 'mL' },
-      route: 'inhaled',
+      route: 'Inhaled',
       frequency: 'as needed',
       specialInstructions: 'use portable mesh nebulizer'
     },

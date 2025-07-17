@@ -1,5 +1,5 @@
 import type { Medication } from '../types/index';
-import { doseForms, routes, frequencies, getFrequency, getVerb } from '../constants/medication-data';
+import { doseForms, routes, frequencies, getFrequency, getRoute, getVerb } from '../constants/medication-data';
 
 export interface DoseInput {
   value: number;
@@ -217,7 +217,7 @@ export function generateSignature(
   specialInstructions?: string
 ): SignatureResult {
   // Get reference data
-  const routeInfo = routes[routeName];
+  const routeInfo = getRoute(routeName);
   const frequencyInfo = getFrequency(frequencyName);
   
   if (!routeInfo || !frequencyInfo) {

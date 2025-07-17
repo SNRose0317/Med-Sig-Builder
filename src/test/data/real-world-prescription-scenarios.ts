@@ -184,8 +184,8 @@ export const CARDIOLOGY_SCENARIOS: Record<string, Medication & { scenarios: Part
         category: 'tablet',
         input: {
           dose: { value: 1, unit: 'tablet' },
-          route: 'by mouth',
-          frequency: 'once daily',
+          route: 'Orally',
+          frequency: 'Once Daily',
           specialInstructions: 'Take at the same time each evening'
         },
         expected: {
@@ -206,8 +206,8 @@ export const CARDIOLOGY_SCENARIOS: Record<string, Medication & { scenarios: Part
         category: 'tablet',
         input: {
           dose: { value: 0.5, unit: 'tablet' },
-          route: 'by mouth',
-          frequency: 'once daily',
+          route: 'Orally',
+          frequency: 'Once Daily',
           specialInstructions: 'Take at the same time each evening'
         },
         expected: {
@@ -228,8 +228,8 @@ export const CARDIOLOGY_SCENARIOS: Record<string, Medication & { scenarios: Part
         category: 'tablet',
         input: {
           dose: { value: 0.75, unit: 'tablet' },
-          route: 'by mouth',
-          frequency: 'once daily',
+          route: 'Orally',
+          frequency: 'Once Daily',
           specialInstructions: 'Take at the same time each evening'
         },
         expected: {
@@ -303,7 +303,7 @@ export const DERMATOLOGY_SCENARIOS: Record<string, Medication & { scenarios: Par
         input: {
           dose: { value: 2, unit: 'click' },
           route: 'topical',
-          frequency: 'once daily',
+          frequency: 'Once Daily',
           specialInstructions: 'Apply to clean, dry skin on shoulders or upper arms'
         },
         expected: {
@@ -325,7 +325,7 @@ export const DERMATOLOGY_SCENARIOS: Record<string, Medication & { scenarios: Par
         input: {
           dose: { value: 4, unit: 'click' },
           route: 'topical',
-          frequency: 'once daily',
+          frequency: 'Once Daily',
           specialInstructions: 'Apply to clean, dry skin on shoulders and upper arms'
         },
         expected: {
@@ -347,7 +347,7 @@ export const DERMATOLOGY_SCENARIOS: Record<string, Medication & { scenarios: Par
         input: {
           dose: { value: 2, unit: 'click' },
           route: 'topical',
-          frequency: 'twice daily',
+          frequency: 'Twice Daily',
           specialInstructions: 'Apply morning and evening to different skin areas'
         },
         expected: {
@@ -418,8 +418,8 @@ export const PEDIATRIC_SCENARIOS: Record<string, Medication & { scenarios: Parti
         category: 'liquid',
         input: {
           dose: { value: 500, unit: 'mg' },
-          route: 'by mouth',
-          frequency: 'twice daily',
+          route: 'Orally',
+          frequency: 'Twice Daily',
           specialInstructions: 'Give with food to reduce stomach upset'
         },
         expected: {
@@ -440,8 +440,8 @@ export const PEDIATRIC_SCENARIOS: Record<string, Medication & { scenarios: Parti
         category: 'liquid',
         input: {
           dose: { value: 250, unit: 'mg' },
-          route: 'by mouth',
-          frequency: 'three times daily',
+          route: 'Orally',
+          frequency: 'Three Times Daily',
           specialInstructions: 'Give every 8 hours'
         },
         expected: {
@@ -513,7 +513,7 @@ export const DIABETES_SCENARIOS: Record<string, Medication & { scenarios: Partia
         input: {
           dose: { value: 20, unit: 'units' },
           route: 'subcutaneous',
-          frequency: 'once daily',
+          frequency: 'Once Daily',
           specialInstructions: 'Inject at bedtime, rotate injection sites'
         },
         expected: {
@@ -535,7 +535,7 @@ export const DIABETES_SCENARIOS: Record<string, Medication & { scenarios: Partia
         input: {
           dose: { value: 45, unit: 'units' },
           route: 'subcutaneous',
-          frequency: 'once daily',
+          frequency: 'Once Daily',
           specialInstructions: 'Inject at bedtime'
         },
         expected: {

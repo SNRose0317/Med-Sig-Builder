@@ -296,7 +296,7 @@ describe('Golden Master Test Suite', () => {
             }]
           },
           dose: { value: 1, unit: 'tablet' },
-          route: 'by mouth',
+          route: 'Orally',
           frequency: 'twice daily'
         },
         expected: {

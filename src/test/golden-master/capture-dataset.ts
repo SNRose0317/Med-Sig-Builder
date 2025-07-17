@@ -134,7 +134,7 @@ function generateSystematicCombinations(): GoldenTestCase[] {
           name: `${medication.name} ${dose.value} ${dose.unit} ${frequency}`,
           description: `Systematic tablet capture`,
           category: 'tablet',
-          input: { medication, dose, route: 'by mouth', frequency },
+          input: { medication, dose, route: 'Orally', frequency },
           expected: { humanReadable: '' },
           metadata: { clinicalIntent: 'Systematic capture', version: '1.0.0' }
         });
@@ -158,7 +158,7 @@ function generateSystematicCombinations(): GoldenTestCase[] {
           name: `${medication.name} ${dose.value} ${dose.unit} ${frequency}`,
           description: `Systematic liquid capture`,
           category: 'liquid',
-          input: { medication, dose, route: 'by mouth', frequency },
+          input: { medication, dose, route: 'Orally', frequency },
           expected: { humanReadable: '' },
           metadata: { clinicalIntent: 'Systematic capture', version: '1.0.0' }
         });

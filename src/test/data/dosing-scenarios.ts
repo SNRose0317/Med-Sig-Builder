@@ -170,7 +170,7 @@ export const TOPICAL_DOSE_SCENARIOS: DoseScenario[] = [
  */
 export const ROUTE_SCENARIOS: RouteScenario[] = [
   // Oral routes
-  { id: 'route-by-mouth', route: 'by mouth', category: 'oral', applicableDoseForms: ['tablet', 'capsule', 'solution', 'suspension'] },
+  { id: 'route-by-mouth', route: 'Orally', category: 'oral', applicableDoseForms: ['tablet', 'capsule', 'solution', 'suspension'] },
   { id: 'route-orally', route: 'orally', category: 'oral', applicableDoseForms: ['tablet', 'capsule', 'solution', 'suspension'] },
   { id: 'route-po', route: 'PO', category: 'oral', applicableDoseForms: ['tablet', 'capsule', 'solution', 'suspension'] },
   { id: 'route-sublingual', route: 'sublingually', category: 'oral', applicableDoseForms: ['tablet', 'solution'] },

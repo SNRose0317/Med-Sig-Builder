@@ -65,7 +65,7 @@ export const MULTI_INGREDIENT_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.combinationTablet,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -169,7 +169,7 @@ export const MULTI_INGREDIENT_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.microDose,
       dose: { value: 5, unit: 'mL' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'twice daily'
     },
     expected: {
@@ -209,7 +209,7 @@ export const MULTI_INGREDIENT_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.multiIngredient.unitConversion,
       dose: { value: 2, unit: 'capsule' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'once daily'
     },
     expected: {
@@ -340,7 +340,7 @@ export const COMPLEX_PRN_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.ibuprofen200,
       doseRange: { minValue: 1, maxValue: 2, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'every 6 hours as needed',
       maxDailyDose: { value: 6, unit: 'tablet' },
       specialInstructions: 'for pain'
@@ -362,7 +362,7 @@ export const COMPLEX_PRN_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.acetaminophen500,
       doseRange: { minValue: 1, maxValue: 2, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'every 4 hours as needed',
       maxDailyDose: { value: 8, unit: 'tablet' },
       specialInstructions: 'for fever or pain'
@@ -384,7 +384,7 @@ export const COMPLEX_PRN_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.lorazepam1mg,
       doseRange: { minValue: 0.5, maxValue: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'every 8 hours as needed',
       maxDailyDose: { value: 3, unit: 'tablet' },
       specialInstructions: 'for anxiety'
@@ -406,7 +406,7 @@ export const COMPLEX_PRN_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.morphine15mg,
       doseRange: { minValue: 1, maxValue: 3, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'every 4 hours as needed',
       maxDailyDose: { value: 12, unit: 'tablet' },
       specialInstructions: 'for severe pain'
@@ -428,7 +428,7 @@ export const COMPLEX_PRN_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.liquids.diphenhydramineElixir,
       doseRange: { minValue: 5, maxValue: 10, unit: 'mL' },
-      route: 'by mouth',
+      route: 'Orally',
       frequency: 'every 6 hours as needed',
       maxDailyDose: { value: 40, unit: 'mL' },
       specialInstructions: 'for allergic reactions'
@@ -451,7 +451,7 @@ export const COMPLEX_PRN_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.ibuprofen200,
       dose: { value: 2, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequencyRange: { minFrequency: 1, maxFrequency: 1, period: 4, maxPeriod: 6, periodUnit: 'h' },
       maxDailyDose: { value: 8, unit: 'tablet' },
       specialInstructions: 'for pain'
@@ -473,7 +473,7 @@ export const COMPLEX_PRN_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.lorazepam1mg,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequencyRange: { minFrequency: 1, maxFrequency: 1, period: 2, maxPeriod: 8, periodUnit: 'h' },
       maxDailyDose: { value: 6, unit: 'tablet' },
       specialInstructions: 'for anxiety attacks'
@@ -495,7 +495,7 @@ export const COMPLEX_PRN_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.omeprazole20,
       dose: { value: 1, unit: 'capsule' },
-      route: 'by mouth',
+      route: 'Orally',
       frequencyRange: { minFrequency: 1, maxFrequency: 2, period: 1, periodUnit: 'd' },
       maxDailyDose: { value: 2, unit: 'capsule' },
       specialInstructions: 'for heartburn'
@@ -539,7 +539,7 @@ export const COMPLEX_PRN_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.sumatriptan100mg,
       dose: { value: 1, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequencyRange: { minFrequency: 1, maxFrequency: 3, period: 1, periodUnit: 'week' },
       maxDailyDose: { value: 2, unit: 'tablet' },
       specialInstructions: 'for migraine headaches'
@@ -562,7 +562,7 @@ export const COMPLEX_PRN_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.ibuprofen200,
       doseRange: { minValue: 1, maxValue: 2, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequencyRange: { minFrequency: 1, maxFrequency: 1, period: 6, maxPeriod: 8, periodUnit: 'h' },
       maxDailyDose: { value: 6, unit: 'tablet' },
       specialInstructions: 'for pain or inflammation'
@@ -584,7 +584,7 @@ export const COMPLEX_PRN_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.oxycodone5mg,
       doseRange: { minValue: 1, maxValue: 2, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequencyRange: { minFrequency: 1, maxFrequency: 1, period: 4, maxPeriod: 6, periodUnit: 'h' },
       maxDailyDose: { value: 8, unit: 'tablet' },
       maxAdministrationsPerDay: 4,
@@ -607,7 +607,7 @@ export const COMPLEX_PRN_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.liquids.acetaminophenSolution,
       doseRange: { minValue: 2.5, maxValue: 5, unit: 'mL' },
-      route: 'by mouth',
+      route: 'Orally',
       frequencyRange: { minFrequency: 1, maxFrequency: 1, period: 4, maxPeriod: 6, periodUnit: 'h' },
       maxDailyDose: { value: 20, unit: 'mL' },
       specialInstructions: 'for fever, pediatric dosing'
@@ -629,7 +629,7 @@ export const COMPLEX_PRN_CASES: Partial<GoldenTestCase>[] = [
     input: {
       medication: MEDICATION_FIXTURES.tablets.morphine15mg,
       doseRange: { minValue: 0.5, maxValue: 2, unit: 'tablet' },
-      route: 'by mouth',
+      route: 'Orally',
       frequencyRange: { minFrequency: 1, maxFrequency: 1, period: 2, maxPeriod: 4, periodUnit: 'h' },
       maxDailyDose: { value: 6, unit: 'tablet' },
       specialInstructions: 'for breakthrough pain, in addition to long-acting medication'
@@ -685,7 +685,7 @@ export const TAPERING_DOSE_CASES: Partial<GoldenTestCase>[] = [
         { phase: 3, dose: { value: 2, unit: 'tablet' }, duration: { value: 3, unit: 'day' }, frequency: 'once daily' },
         { phase: 4, dose: { value: 1, unit: 'tablet' }, duration: { value: 3, unit: 'day' }, frequency: 'once daily' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'with food'
     },
     expected: {
@@ -710,7 +710,7 @@ export const TAPERING_DOSE_CASES: Partial<GoldenTestCase>[] = [
         { phase: 3, dose: { value: 0.5, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'twice daily' },
         { phase: 4, dose: { value: 0.5, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'once daily' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'monitor for withdrawal symptoms'
     },
     expected: {
@@ -734,7 +734,7 @@ export const TAPERING_DOSE_CASES: Partial<GoldenTestCase>[] = [
         { phase: 2, dose: { value: 0.5, unit: 'tablet' }, duration: { value: 2, unit: 'week' }, frequency: 'once daily' },
         { phase: 3, dose: { value: 0.5, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'every other day' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'monitor mood and discontinuation symptoms'
     },
     expected: {
@@ -759,7 +759,7 @@ export const TAPERING_DOSE_CASES: Partial<GoldenTestCase>[] = [
         { phase: 3, dose: { value: 1, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'twice daily' },
         { phase: 4, dose: { value: 1, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'once daily' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'controlled substance, monitor withdrawal symptoms'
     },
     expected: {
@@ -784,7 +784,7 @@ export const TAPERING_DOSE_CASES: Partial<GoldenTestCase>[] = [
         { phase: 3, dose: { value: 1, unit: 'tablet' }, duration: { value: 2, unit: 'day' }, frequency: 'twice daily' },
         { phase: 4, dose: { value: 1, unit: 'tablet' }, duration: { value: 2, unit: 'day' }, frequency: 'once daily' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'monitor for seizures and delirium tremens'
     },
     expected: {
@@ -810,7 +810,7 @@ export const TAPERING_DOSE_CASES: Partial<GoldenTestCase>[] = [
         { phase: 3, dose: { value: 2, unit: 'tablet' }, duration: { value: 3, unit: 'day' }, frequency: 'once daily' },
         { phase: 4, dose: { value: 1, unit: 'tablet' }, duration: { value: 2, unit: 'day' }, frequency: 'once daily' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'with breakfast'
     },
     expected: {
@@ -835,7 +835,7 @@ export const TAPERING_DOSE_CASES: Partial<GoldenTestCase>[] = [
         { phase: 3, dose: { value: 1, unit: 'tablet' }, duration: { value: 1, unit: 'month' }, frequency: 'once daily' },
         { phase: 4, dose: { value: 0.5, unit: 'tablet' }, duration: { value: 1, unit: 'month' }, frequency: 'once daily' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'controlled substance, supervised withdrawal'
     },
     expected: {
@@ -860,7 +860,7 @@ export const TAPERING_DOSE_CASES: Partial<GoldenTestCase>[] = [
         { phase: 3, dose: { value: 2, unit: 'tablet' }, duration: { value: 3.5, unit: 'day' }, frequency: 'once daily' },
         { phase: 4, dose: { value: 1, unit: 'tablet' }, duration: { value: 3.5, unit: 'day' }, frequency: 'once daily' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'reduce dose twice weekly'
     },
     expected: {
@@ -884,7 +884,7 @@ export const TAPERING_DOSE_CASES: Partial<GoldenTestCase>[] = [
         { phase: 2, dose: { value: 1, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'three times daily', note: 'may extend to 2 weeks if needed' },
         { phase: 3, dose: { value: 1, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'once daily', note: 'may extend to 2 weeks if needed' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'adjust taper rate based on tolerance'
     },
     expected: {
@@ -908,7 +908,7 @@ export const TAPERING_DOSE_CASES: Partial<GoldenTestCase>[] = [
         { phase: 2, dose: { value: 1, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'twice daily', condition: 'if pain well controlled' },
         { phase: 3, dose: { value: 1, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'once daily', condition: 'if pain well controlled' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'hold taper if pain returns'
     },
     expected: {
@@ -935,7 +935,7 @@ export const TAPERING_DOSE_CASES: Partial<GoldenTestCase>[] = [
         { phase: 4, dose: { value: 2, unit: 'tablet' }, duration: { value: 3, unit: 'day' }, frequency: 'once daily', type: 'taper' },
         { phase: 5, dose: { value: 1, unit: 'tablet' }, duration: { value: 3, unit: 'day' }, frequency: 'once daily', type: 'taper' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'escalate to therapeutic dose then taper'
     },
     expected: {
@@ -959,7 +959,7 @@ export const TAPERING_DOSE_CASES: Partial<GoldenTestCase>[] = [
         { phase: 2, dose: { value: 2, unit: 'tablet' }, duration: { value: 2, unit: 'week' }, frequency: 'once daily', condition: 'if seizure-free for 2 weeks' },
         { phase: 3, dose: { value: 1, unit: 'tablet' }, duration: { value: 2, unit: 'week' }, frequency: 'once daily', condition: 'if seizure-free for 2 weeks' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'monitor for seizure activity, check levels'
     },
     expected: {
@@ -984,7 +984,7 @@ export const TAPERING_DOSE_CASES: Partial<GoldenTestCase>[] = [
         { phase: 3, dose: { value: 1, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'once daily', note: 'continue diazepam 5mg twice daily' },
         { phase: 4, dose: { value: 0, unit: 'tablet' }, duration: { value: 0, unit: 'day' }, frequency: 'none', note: 'continue diazepam only' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'cross-taper to longer-acting benzodiazepine'
     },
     expected: {
@@ -1008,7 +1008,7 @@ export const TAPERING_DOSE_CASES: Partial<GoldenTestCase>[] = [
         { phase: 2, dose: { value: 2, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'once daily', type: 'taper' },
         { phase: 3, dose: { value: 1, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'once daily', type: 'taper' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'monitor lithium levels, maintain mood stability'
     },
     expected: {
@@ -1033,7 +1033,7 @@ export const TAPERING_DOSE_CASES: Partial<GoldenTestCase>[] = [
         { phase: 3, dose: { value: 0, unit: 'tablet' }, duration: { value: 2, unit: 'week' }, frequency: 'none', type: 'holiday' },
         { phase: 4, dose: { value: 1, unit: 'tablet' }, duration: { value: 1, unit: 'week' }, frequency: 'twice daily', type: 'restart' }
       ],
-      route: 'by mouth',
+      route: 'Orally',
       specialInstructions: 'summer medication holiday, monitor growth and appetite'
     },
     expected: {
