@@ -235,6 +235,21 @@ Object.keys(frequencies).forEach(key => {
   frequencyLookup.set(key.toLowerCase(), key);
 });
 
+// Add common aliases for frequencies
+frequencyLookup.set('weekly', 'Once Per Week');
+frequencyLookup.set('once weekly', 'Once Per Week');
+frequencyLookup.set('every week', 'Once Per Week');
+frequencyLookup.set('once per week', 'Once Per Week');
+frequencyLookup.set('daily', 'Once Daily');
+frequencyLookup.set('once daily', 'Once Daily');
+frequencyLookup.set('every day', 'Once Daily');
+frequencyLookup.set('bid', 'Twice Daily');
+frequencyLookup.set('twice daily', 'Twice Daily');
+frequencyLookup.set('tid', 'Three Times Daily');
+frequencyLookup.set('three times daily', 'Three Times Daily');
+frequencyLookup.set('qid', 'Four Times Daily');
+frequencyLookup.set('four times daily', 'Four Times Daily');
+
 // Helper function to get frequency by any case
 export const getFrequency = (value: string): Frequency | undefined => {
   if (!value) return undefined;

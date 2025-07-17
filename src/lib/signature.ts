@@ -9,6 +9,15 @@ export interface DoseInput {
 export interface SignatureResult {
   humanReadable: string;
   fhirRepresentation: any;
+  // Template-friendly variables for advanced usage
+  templateVariables?: {
+    verb: string;
+    doseText: string;
+    dualDose?: string;
+    route: string;
+    frequency: string;
+    additionalInstructions?: string;
+  };
 }
 
 /**
@@ -129,13 +138,13 @@ function formatTabletDose(value: number): string {
 function formatDose(dose: DoseInput, medication: Medication): string {
   const doseForm = doseForms[medication.doseForm];
   
-  // Handle Topiclick dispenser (4 clicks = 1 mL)
-  if (medication.doseForm === 'Cream' && doseForm?.dispenserConversion) {
-    const { dispenserUnit, dispenserPluralUnit, conversionRatio } = doseForm.dispenserConversion;
+  // Handle special dispensers (e.g., Topiclick: 4 clicks = 1 mL)
+  if (medication.dispenserInfo) {
+    const { type, unit, pluralUnit, conversionRatio } = medication.dispenserInfo;
     
-    if (dose.unit === dispenserUnit) {
-      // User entered clicks
-      const unitText = dose.value === 1 ? dispenserUnit : dispenserPluralUnit;
+    if (dose.unit === unit) {
+      // User entered dispenser units (clicks, pumps, etc.)
+      const unitText = dose.value === 1 ? unit : pluralUnit;
       
       // Calculate mg equivalent if we have strength ratio
       if (medication.ingredient?.[0]?.strengthRatio) {
@@ -180,10 +189,19 @@ function formatDose(dose: DoseInput, medication: Medication): string {
     const strengthValue = strengthRatio.numerator.value / strengthRatio.denominator.value;
     
     // For injectable solutions (show weight and volume)
-    if ((medication.doseForm === 'Vial' || medication.doseForm === 'Solution') && 
+    if ((medication.doseForm === 'Vial' || medication.doseForm === 'Solution' || medication.doseForm === 'Injection') && 
         dose.unit === strengthRatio.numerator.unit) {
-      const mlValue = (dose.value / strengthValue).toFixed(2);
-      return `${dose.value} ${dose.unit}, as ${mlValue} mL`;
+      const mlValue = dose.value / strengthValue;
+      const mlText = mlValue % 1 === 0 ? mlValue.toString() : mlValue.toFixed(1);
+      return `${dose.value} ${dose.unit}, as ${mlText} mL`;
+    }
+    
+    // For liquid medications (suspensions, solutions) when dosed by active ingredient
+    if ((medication.doseForm === 'Suspension' || medication.doseForm === 'Solution') && 
+        dose.unit === strengthRatio.numerator.unit) {
+      const mlValue = dose.value / strengthValue;
+      const mlText = mlValue % 1 === 0 ? mlValue.toString() : mlValue.toFixed(1);
+      return `${dose.value} ${dose.unit}, as ${mlText} mL`;
     }
     
     // For tablets/capsules with strength (show count and strength)
@@ -230,6 +248,9 @@ export function generateSignature(
   // Format the dose
   const doseText = formatDose(dose, medication);
   
+  // Extract dual dose information if present
+  const dualDose = doseText.includes(', as ') ? doseText.split(', as ')[1] : undefined;
+  
   // Build the signature
   const parts = [
     verb,
@@ -243,7 +264,24 @@ export function generateSignature(
     parts.push(specialInstructions);
   }
   
-  const humanReadable = parts.filter(Boolean).join(' ') + '.';
+  // Add automatic shake instructions for suspensions
+  let additionalInstructions = '';
+  if (medication.doseForm === 'Suspension') {
+    additionalInstructions = 'Shake well before use.';
+  }
+  
+  const humanReadable = parts.filter(Boolean).join(' ') + '.' + 
+    (additionalInstructions ? ` ${additionalInstructions}` : '');
+  
+  // Prepare template variables
+  const templateVariables = {
+    verb,
+    doseText,
+    dualDose,
+    route: routeInfo.humanReadable,
+    frequency: frequencyInfo.humanReadable,
+    additionalInstructions: additionalInstructions || specialInstructions
+  };
   
   // Create simplified FHIR representation
   const fhirRepresentation = {
@@ -268,7 +306,8 @@ export function generateSignature(
   
   return {
     humanReadable,
-    fhirRepresentation
+    fhirRepresentation,
+    templateVariables
   };
 }
 

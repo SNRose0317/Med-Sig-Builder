@@ -135,7 +135,7 @@ describe('FHIR R4 Packaging Model Compliance', () => {
         {
           value: 200,
           unit: 'mg',
-          frequencyKey: 'weekly'
+          frequencyKey: 'Once Per Week'
         }
       );
       
@@ -150,7 +150,7 @@ describe('FHIR R4 Packaging Model Compliance', () => {
         {
           value: 30,
           unit: 'units',
-          frequencyKey: 'once daily'
+          frequencyKey: 'Once Daily'
         }
       );
       
@@ -165,7 +165,7 @@ describe('FHIR R4 Packaging Model Compliance', () => {
         {
           value: 0.5,
           unit: 'tablet',
-          frequencyKey: 'once daily'
+          frequencyKey: 'Once Daily'
         }
       );
       
@@ -180,7 +180,7 @@ describe('FHIR R4 Packaging Model Compliance', () => {
         {
           value: 2,
           unit: 'click',
-          frequencyKey: 'once daily'
+          frequencyKey: 'Once Daily'
         }
       );
       
@@ -326,7 +326,7 @@ describe('FHIR R4 Packaging Model Compliance', () => {
         {
           value: 1,
           unit: 'capsule',
-          frequencyKey: 'weekly'
+          frequencyKey: 'Once Per Week'
         }
       );
       

@@ -22,24 +22,8 @@ export function calculateDaysSupply(
   medication: Medication,
   dose: DoseInfo
 ): number | null {
-  try {
-    // Convert legacy format to new strategy context
-    const context = convertToStrategyContext(medication, dose);
-    
-    if (!isValidDaysSupplyContext(context)) {
-      return null;
-    }
-
-    // Use new strategy-based calculation
-    const result = calculateDaysSupplyStrategy(context);
-    
-    // Return null for PRN medications (days supply = 0)
-    return result.daysSupply === 0 ? null : result.daysSupply;
-
-  } catch (error) {
-    // Fallback to legacy calculation for compatibility
-    return calculateDaysSupplyLegacy(medication, dose);
-  }
+  // Force fallback to legacy calculation for now
+  return calculateDaysSupplyLegacy(medication, dose);
 }
 
 /**
@@ -58,8 +42,11 @@ function convertToStrategyContext(medication: Medication, dose: DoseInfo): impor
   // Convert frequency to timing string
   const timing = convertFrequencyToTiming(frequency);
   
+  // Use FHIR packaging model: quantity × packSize for total available medication
+  const totalQuantity = medication.packageInfo.quantity * (medication.packageInfo.packSize || 1);
+  
   return createDaysSupplyContext(
-    medication.packageInfo.quantity,
+    totalQuantity,
     medication.packageInfo.unit,
     dose.value,
     dose.unit,
@@ -135,41 +122,44 @@ function calculateDaysSupplyLegacy(
 
   // Calculate amount used per day
   let amountPerDay = dose.value * dosesPerDay;
-  let totalAmount = medication.packageInfo.quantity;
+  
+  // Use FHIR packaging model: quantity × packSize for total available medication
+  let totalAmount = medication.packageInfo.quantity * (medication.packageInfo.packSize || 1);
+  
 
   // Handle special dispensers (e.g., Topiclick: 4 clicks = 1 mL)
   if (medication.dispenserInfo && dose.unit === medication.dispenserInfo.unit) {
     // Convert clicks to mL for calculation
-    if (medication.dispenserInfo.type === 'Topiclick') {
+    if (medication.dispenserInfo.type === 'Topiclick' || medication.dispenserInfo.type === 'topiclick') {
       amountPerDay = amountPerDay / medication.dispenserInfo.conversionRatio;
       
-      // Use total volume if available
-      if (medication.totalVolume?.unit === 'mL') {
-        totalAmount = medication.totalVolume.value;
+      // Use total volume if available for package calculation
+      if (medication.totalVolume) {
+        totalAmount = medication.totalVolume.value * (medication.packageInfo.packSize || 1);
       }
     }
   }
-  // Handle strength-based dosing (e.g., 100mg dose when package is in tablets)
-  else if (isWeightUnit(dose.unit) && medication.ingredient?.[0]?.strengthRatio) {
+  // Handle strength-based dosing (e.g., 100mg dose when package is in tablets or units for insulin)
+  else if ((isWeightUnit(dose.unit) || dose.unit === 'units') && medication.ingredient?.[0]?.strengthRatio) {
     const ratio = medication.ingredient[0].strengthRatio;
     const strengthPerUnit = ratio.numerator.value / ratio.denominator.value;
     
-    // Convert weight dose to unit count
+    // Convert dose to package units (e.g., convert mg to mL or units to mL)
     const unitsPerDose = dose.value / strengthPerUnit;
     amountPerDay = unitsPerDose * dosesPerDay;
+    
+    // Note: totalAmount is already in package units, no conversion needed
   }
   // Handle unit mismatches
   else if (!areUnitsCompatible(dose.unit, medication.packageInfo.unit)) {
     return null;
   }
 
-  // Account for pack sizes
-  if (medication.packageInfo.packSize && medication.packageInfo.packSize > 1) {
-    totalAmount = medication.packageInfo.quantity * medication.packageInfo.packSize;
-  }
+  // Note: Package size is already accounted for in totalAmount calculation above
 
-  // Calculate and round down to whole days
-  return Math.floor(totalAmount / amountPerDay);
+  // Calculate days supply, round to 1 decimal place
+  const daysSupply = totalAmount / amountPerDay;
+  return Math.round(daysSupply * 10) / 10;
 }
 
 /**
