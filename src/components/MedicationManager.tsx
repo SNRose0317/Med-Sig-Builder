@@ -447,6 +447,64 @@ const MedicationManager: React.FC<MedicationManagerProps> = () => {
                 </div>
               </FormField>
             </div>
+            <div className="col-span-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField 
+                  label="Default Route"
+                  description="Primary administration route for this medication"
+                >
+                  <Select 
+                    value={formData.defaultRoute} 
+                    onValueChange={(value) => setFormData({ ...formData, defaultRoute: value })}
+                  >
+                    <SelectTrigger className="bg-input border-input text-foreground">
+                      <SelectValue placeholder="Select route" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border text-popover-foreground">
+                      {availableRoutes.map((route) => (
+                        <SelectItem key={route} value={route}>
+                          {routes[route]?.name || route}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+                {availableDispenserTypes.length > 0 && (
+                  <FormField 
+                    label="Dispenser Type"
+                    description="Special dispensing method (e.g., Topiclick, syringe)"
+                  >
+                    <Select 
+                      value={formData.dispenserInfo?.type || ''} 
+                      onValueChange={(value) => {
+                        const dispenser = dispenserTypes[value];
+                        setFormData({ 
+                          ...formData, 
+                          dispenserInfo: dispenser ? {
+                            type: value,
+                            unit: dispenser.defaultUnit,
+                            pluralUnit: dispenser.pluralUnit,
+                            conversionRatio: dispenser.defaultConversionRatio
+                          } : undefined
+                        });
+                      }}
+                    >
+                      <SelectTrigger className="bg-input border-input text-foreground">
+                        <SelectValue placeholder="Select dispenser" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border text-popover-foreground">
+                        <SelectItem value="">None</SelectItem>
+                        {availableDispenserTypes.map((dispenser) => (
+                          <SelectItem key={dispenser} value={dispenser}>
+                            {dispenserOptions.find(d => d.value === dispenser)?.label || dispenser}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+                )}
+              </div>
+            </div>
           </div>
         </FormSection>
 
@@ -583,68 +641,6 @@ const MedicationManager: React.FC<MedicationManagerProps> = () => {
           </div>
         </FormSection>
 
-        {/* Dosing & Dispensing */}
-        <FormSection 
-          title="Dosing & Dispensing"
-          description="Route administration and dispensing method configuration"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField 
-              label="Default Route"
-              description="Primary administration route for this medication"
-            >
-              <Select 
-                value={formData.defaultRoute} 
-                onValueChange={(value) => setFormData({ ...formData, defaultRoute: value })}
-              >
-                <SelectTrigger className="bg-input border-input text-foreground">
-                  <SelectValue placeholder="Select route" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border text-popover-foreground">
-                  {availableRoutes.map((route) => (
-                    <SelectItem key={route} value={route}>
-                      {routes[route]?.name || route}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormField>
-            {availableDispenserTypes.length > 0 && (
-              <FormField 
-                label="Dispenser Type"
-                description="Special dispensing method (e.g., Topiclick, syringe)"
-              >
-                <Select 
-                  value={formData.dispenserInfo?.type || ''} 
-                  onValueChange={(value) => {
-                    const dispenser = dispenserTypes[value];
-                    setFormData({ 
-                      ...formData, 
-                      dispenserInfo: dispenser ? {
-                        type: value,
-                        unit: dispenser.defaultUnit,
-                        pluralUnit: dispenser.pluralUnit,
-                        conversionRatio: dispenser.defaultConversionRatio
-                      } : undefined
-                    });
-                  }}
-                >
-                  <SelectTrigger className="bg-input border-input text-foreground">
-                    <SelectValue placeholder="Select dispenser" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border text-popover-foreground">
-                    <SelectItem value="">None</SelectItem>
-                    {availableDispenserTypes.map((dispenser) => (
-                      <SelectItem key={dispenser} value={dispenser}>
-                        {dispenserOptions.find(d => d.value === dispenser)?.label || dispenser}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormField>
-            )}
-          </div>
-        </FormSection>
 
         {/* Prescription Quantity Constraints */}
         <FormSection 
