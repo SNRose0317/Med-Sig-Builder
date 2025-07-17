@@ -76,12 +76,13 @@ export class LiquidDaysSupplyStrategy implements IDaysSupplyStrategy {
       return result;
 
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       return createDaysSupplyResult(
         0,
         'Liquid calculation failed',
         this.createBreakdown(context, 0, 0, []),
         CALCULATION_CONSTANTS.LOW_CONFIDENCE,
-        [`Error: ${error.message}`]
+        [`Error: ${errorMessage}`]
       );
     }
   }

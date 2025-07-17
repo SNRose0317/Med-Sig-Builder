@@ -96,8 +96,9 @@ export class TitrationDaysSupplyStrategy implements IDaysSupplyStrategy {
         throw error;
       }
 
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       throw new InvalidTitrationScheduleError(
-        `Titration calculation failed: ${error.message}`,
+        `Titration calculation failed: ${errorMessage}`,
         context
       );
     }

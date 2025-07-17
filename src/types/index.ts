@@ -104,3 +104,6 @@ export interface SignatureState {
     general?: string;
   };
 }
+
+// Export SignatureResult type  
+export type { SignatureResult } from '../lib/signature';

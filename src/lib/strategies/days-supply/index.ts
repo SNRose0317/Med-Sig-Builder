@@ -27,6 +27,10 @@ export type {
   IUnitConverter
 } from './types';
 
+// Import types for internal use
+import type { DaysSupplyContext } from '../../temporal/types';
+import { calculateDaysSupply } from './DaysSupplyStrategyDispatcher';
+
 // Error types
 export {
   DaysSupplyCalculationError,
@@ -101,7 +105,7 @@ export function createDaysSupplyContext(
   doseUnit: string,
   timing: string | string[],
   medication?: {
-    doseForm?: string;
+    doseForm: string;
     ingredient?: Array<{
       strengthRatio?: {
         numerator: { value: number; unit: string };
@@ -153,16 +157,21 @@ export function quickDaysSupplyCalculation(
 /**
  * Validation function for days supply inputs
  */
-export function isValidDaysSupplyContext(context: any): context is DaysSupplyContext {
-  return context &&
-         typeof context.packageQuantity === 'number' &&
-         context.packageQuantity > 0 &&
-         typeof context.packageUnit === 'string' &&
-         context.packageUnit.trim() !== '' &&
-         typeof context.doseAmount === 'number' &&
-         context.doseAmount > 0 &&
-         typeof context.doseUnit === 'string' &&
-         context.doseUnit.trim() !== '' &&
-         context.timing !== undefined &&
-         context.timing !== null;
+export function isValidDaysSupplyContext(context: unknown): context is DaysSupplyContext {
+  if (!context || typeof context !== 'object') {
+    return false;
+  }
+
+  const obj = context as Record<string, unknown>;
+
+  return typeof obj.packageQuantity === 'number' &&
+         obj.packageQuantity > 0 &&
+         typeof obj.packageUnit === 'string' &&
+         obj.packageUnit.trim() !== '' &&
+         typeof obj.doseAmount === 'number' &&
+         obj.doseAmount > 0 &&
+         typeof obj.doseUnit === 'string' &&
+         obj.doseUnit.trim() !== '' &&
+         obj.timing !== undefined &&
+         obj.timing !== null;
 }

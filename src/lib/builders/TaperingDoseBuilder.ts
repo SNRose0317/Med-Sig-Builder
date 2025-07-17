@@ -9,11 +9,7 @@
 
 import { SimpleTabletBuilder } from './SimpleTabletBuilder';
 import { 
-  ISignatureBuilder, 
-  DoseInput,
-  TimingInput,
-  isValidDoseInput,
-  isValidTimingInput
+  TimingInput
 } from './ISignatureBuilder';
 import { 
   IComplexRegimenBuilder, 
@@ -28,7 +24,6 @@ import {
 } from './IComplexRegimenBuilder';
 import { SignatureInstruction, RelationshipType, InstructionRelationship } from '../../types/SignatureInstruction';
 import { MedicationProfile } from '../../types/MedicationProfile';
-import { MedicationRequestContext } from '../../types/MedicationRequestContext';
 
 /**
  * Phase transition types for tapering schedules
@@ -211,7 +206,7 @@ export class TaperingDoseBuilder extends SimpleTabletBuilder implements IComplex
 
     // Generate instruction for each phase
     this.taperingState.phases.forEach((phase, index) => {
-      const phaseInstruction = this.generatePhaseInstruction(phase, index);
+      const phaseInstruction = this.generatePhaseInstruction(phase);
       instructions.push(phaseInstruction);
 
       // Create sequential relationship to next phase
@@ -226,10 +221,8 @@ export class TaperingDoseBuilder extends SimpleTabletBuilder implements IComplex
 
     // Add relationships to complex state
     this.complexState.relationships = relationships.map(rel => ({
-      sourceInstructionId: rel.from,
-      targetInstructionId: rel.to,
-      relationshipType: rel.type,
-      description: 'Sequential tapering phase'
+      type: rel.type,
+      targetId: rel.to
     }));
 
     // Add tapering-specific instructions
@@ -245,7 +238,7 @@ export class TaperingDoseBuilder extends SimpleTabletBuilder implements IComplex
    */
   getResult(): SignatureInstruction[] {
     if (this.taperingState.currentPhase) {
-      const currentInstruction = this.generatePhaseInstruction(this.taperingState.currentPhase, 0);
+      const currentInstruction = this.generatePhaseInstruction(this.taperingState.currentPhase);
       
       // Add tapering context to the instruction
       this.addTaperingContextToInstruction(currentInstruction);
@@ -395,9 +388,9 @@ export class TaperingDoseBuilder extends SimpleTabletBuilder implements IComplex
   /**
    * Generate instruction for a specific phase
    */
-  private generatePhaseInstruction(phase: TaperingPhaseWithTransition, index: number): SignatureInstruction {
+  private generatePhaseInstruction(phase: TaperingPhaseWithTransition): SignatureInstruction {
     // Temporarily set phase data
-    const originalDose = this.state.dose;
+    const originalDoses = this.state.doses;
     const originalTiming = this.state.timing;
     const originalRoute = this.state.route;
     
@@ -415,7 +408,7 @@ export class TaperingDoseBuilder extends SimpleTabletBuilder implements IComplex
     const phaseInstruction = { ...instructions[0] };
     
     // Restore original state
-    this.state.dose = originalDose;
+    this.state.doses = originalDoses;
     this.state.timing = originalTiming;
     this.state.route = originalRoute;
     

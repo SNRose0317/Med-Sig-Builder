@@ -9,9 +9,11 @@
  */
 
 import { ISignatureBuilder, DoseInput, TimingInput } from './ISignatureBuilder';
-import { SignatureInstruction, RelationshipType } from '../../types/SignatureInstruction';
+import { SignatureInstruction } from '../../types/SignatureInstruction';
 import type { InstructionRelationship } from '../../types/SignatureInstruction';
-import { MedicationProfile } from '../../types/MedicationProfile';
+
+// Re-export types needed by other modules
+export type { InstructionRelationship };
 
 /**
  * Input structure for dose ranges (e.g., 1-2 tablets)
@@ -227,20 +229,22 @@ export interface ComplexRegimenBuilderState {
  * @param doseRange - Dose range to validate
  * @returns True if valid, false otherwise
  */
-export function isValidDoseRangeInput(doseRange: any): doseRange is DoseRangeInput {
+export function isValidDoseRangeInput(doseRange: unknown): doseRange is DoseRangeInput {
   if (!doseRange || typeof doseRange !== 'object') {
     return false;
   }
 
-  if (typeof doseRange.minValue !== 'number' || doseRange.minValue <= 0) {
+  const obj = doseRange as Record<string, unknown>;
+
+  if (typeof obj.minValue !== 'number' || obj.minValue <= 0) {
     return false;
   }
 
-  if (typeof doseRange.maxValue !== 'number' || doseRange.maxValue < doseRange.minValue) {
+  if (typeof obj.maxValue !== 'number' || obj.maxValue < obj.minValue) {
     return false;
   }
 
-  if (typeof doseRange.unit !== 'string' || doseRange.unit.length === 0) {
+  if (typeof obj.unit !== 'string' || obj.unit.length === 0) {
     return false;
   }
 
@@ -253,29 +257,31 @@ export function isValidDoseRangeInput(doseRange: any): doseRange is DoseRangeInp
  * @param frequencyRange - Frequency range to validate
  * @returns True if valid, false otherwise
  */
-export function isValidFrequencyRangeInput(frequencyRange: any): frequencyRange is FrequencyRangeInput {
+export function isValidFrequencyRangeInput(frequencyRange: unknown): frequencyRange is FrequencyRangeInput {
   if (!frequencyRange || typeof frequencyRange !== 'object') {
     return false;
   }
 
-  if (typeof frequencyRange.minFrequency !== 'number' || frequencyRange.minFrequency <= 0) {
+  const obj = frequencyRange as Record<string, unknown>;
+
+  if (typeof obj.minFrequency !== 'number' || obj.minFrequency <= 0) {
     return false;
   }
 
-  if (typeof frequencyRange.maxFrequency !== 'number' || frequencyRange.maxFrequency < frequencyRange.minFrequency) {
+  if (typeof obj.maxFrequency !== 'number' || obj.maxFrequency < obj.minFrequency) {
     return false;
   }
 
-  if (typeof frequencyRange.period !== 'number' || frequencyRange.period <= 0) {
+  if (typeof obj.period !== 'number' || obj.period <= 0) {
     return false;
   }
 
-  if (typeof frequencyRange.periodUnit !== 'string' || frequencyRange.periodUnit.length === 0) {
+  if (typeof obj.periodUnit !== 'string' || obj.periodUnit.length === 0) {
     return false;
   }
 
-  if (frequencyRange.minInterval !== undefined && 
-      (typeof frequencyRange.minInterval !== 'number' || frequencyRange.minInterval <= 0)) {
+  if (obj.minInterval !== undefined && 
+      (typeof obj.minInterval !== 'number' || obj.minInterval <= 0)) {
     return false;
   }
 
@@ -288,32 +294,40 @@ export function isValidFrequencyRangeInput(frequencyRange: any): frequencyRange 
  * @param phase - Tapering phase to validate
  * @returns True if valid, false otherwise
  */
-export function isValidTaperingPhase(phase: any): phase is TaperingPhase {
+export function isValidTaperingPhase(phase: unknown): phase is TaperingPhase {
   if (!phase || typeof phase !== 'object') {
     return false;
   }
 
-  if (typeof phase.name !== 'string' || phase.name.length === 0) {
+  const obj = phase as Record<string, unknown>;
+
+  if (typeof obj.name !== 'string' || obj.name.length === 0) {
     return false;
   }
 
-  if (!phase.dose || typeof phase.dose !== 'object') {
+  if (!obj.dose || typeof obj.dose !== 'object') {
     return false;
   }
 
-  if (!phase.timing || typeof phase.timing !== 'object') {
+  if (!obj.timing || typeof obj.timing !== 'object') {
     return false;
   }
 
-  if (!phase.duration || 
-      typeof phase.duration.value !== 'number' || phase.duration.value <= 0 ||
-      typeof phase.duration.unit !== 'string' || phase.duration.unit.length === 0) {
+  if (!obj.duration || typeof obj.duration !== 'object') {
     return false;
   }
 
-  if (phase.specialInstructions !== undefined && 
-      (!Array.isArray(phase.specialInstructions) || 
-       !phase.specialInstructions.every((inst: any) => typeof inst === 'string'))) {
+  const duration = obj.duration as Record<string, unknown>;
+  if (typeof duration.value !== 'number' || 
+      duration.value <= 0 ||
+      typeof duration.unit !== 'string' || 
+      duration.unit.length === 0) {
+    return false;
+  }
+
+  if (obj.specialInstructions !== undefined && 
+      (!Array.isArray(obj.specialInstructions) || 
+       !obj.specialInstructions.every((inst: unknown) => typeof inst === 'string'))) {
     return false;
   }
 

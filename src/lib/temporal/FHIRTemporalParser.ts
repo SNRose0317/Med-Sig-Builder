@@ -53,7 +53,7 @@ export class FHIRTemporalParser implements ITemporalParser {
         timing: this.getDefaultTiming(),
         isTitration: false,
         confidence: 0,
-        warnings: [`Parsing failed: ${error.message}`]
+        warnings: [`Parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`]
       };
     }
   }
@@ -211,7 +211,7 @@ export class FHIRTemporalParser implements ITemporalParser {
         timing: this.getDefaultTiming(),
         isTitration: false,
         confidence: 0.3,
-        warnings: [`Titration parsing failed: ${error.message}`]
+        warnings: [`Titration parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`]
       };
     }
   }

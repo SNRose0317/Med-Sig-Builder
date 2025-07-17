@@ -18,10 +18,10 @@ import {
   CALCULATION_CONSTANTS,
   DaysSupplyCalculationError
 } from './types';
-import { TitrationDaysSupplyStrategy } from './TitrationDaysSupplyStrategy';
+import { calculationUtils } from './CalculationUtils';
 import { TabletDaysSupplyStrategy } from './TabletDaysSupplyStrategy';
 import { LiquidDaysSupplyStrategy } from './LiquidDaysSupplyStrategy';
-import { calculationUtils } from './CalculationUtils';
+import { TitrationDaysSupplyStrategy } from './TitrationDaysSupplyStrategy';
 
 /**
  * Default strategy for cases where no specific strategy matches
@@ -388,3 +388,4 @@ export const STRATEGY_SELECTION_EXAMPLES = {
     expectedSpecificity: SpecificityLevel.DOSE_FORM
   }
 } as const;
+
