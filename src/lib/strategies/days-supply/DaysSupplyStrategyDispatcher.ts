@@ -90,10 +90,11 @@ class DefaultDaysSupplyStrategy implements IDaysSupplyStrategy {
   private estimateDosesPerDay(timing: string): number {
     const normalized = timing.toLowerCase();
     
-    if (normalized.includes('once daily') || normalized.includes('daily')) return 1;
-    if (normalized.includes('twice daily') || normalized.includes('bid')) return 2;
-    if (normalized.includes('three times daily') || normalized.includes('tid')) return 3;
+    // Check more specific patterns first to avoid substring matching issues
     if (normalized.includes('four times daily') || normalized.includes('qid')) return 4;
+    if (normalized.includes('three times daily') || normalized.includes('tid')) return 3;
+    if (normalized.includes('twice daily') || normalized.includes('bid')) return 2;
+    if (normalized.includes('once daily') || normalized.includes('daily')) return 1;
     if (normalized.includes('once weekly') || normalized.includes('weekly')) return 1/7;
     if (normalized.includes('prn') || normalized.includes('as needed')) return 0;
     

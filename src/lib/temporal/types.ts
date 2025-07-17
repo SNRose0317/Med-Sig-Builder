@@ -129,6 +129,11 @@ export interface DaysSupplyContext {
       conversionRatio: number;
       unit: string;
     };
+    packageInfo?: {
+      quantity: number;
+      unit: string;
+      packSize?: number;
+    };
   };
 }
 

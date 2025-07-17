@@ -34,9 +34,14 @@ export const TABLET_MEDICATIONS = {
       }
     }],
     isScored: 'HALF' as const,
-    packageInfo: {
-      quantity: 100,
+    totalVolume: {
+      value: 1,         // 1 tablet per unit dose (FHIR totalVolume)
       unit: 'tablet'
+    },
+    packageInfo: {
+      quantity: 1,      // 1 tablet per unit dose
+      unit: 'tablet',
+      packSize: 100     // 100 tablets per bottle
     }
   } as Medication,
 
@@ -61,9 +66,14 @@ export const TABLET_MEDICATIONS = {
       }
     }],
     isScored: 'QUARTER' as const,
-    packageInfo: {
-      quantity: 90,
+    totalVolume: {
+      value: 1,         // 1 tablet per unit dose (FHIR totalVolume)
       unit: 'tablet'
+    },
+    packageInfo: {
+      quantity: 1,      // 1 tablet per unit dose
+      unit: 'tablet',
+      packSize: 90      // 90 tablets per bottle
     }
   } as Medication,
 
@@ -88,9 +98,14 @@ export const TABLET_MEDICATIONS = {
       }
     }],
     isScored: 'NONE' as const,
-    packageInfo: {
-      quantity: 30,
+    totalVolume: {
+      value: 1,         // 1 tablet per unit dose (FHIR totalVolume)
       unit: 'tablet'
+    },
+    packageInfo: {
+      quantity: 1,      // 1 tablet per unit dose
+      unit: 'tablet',
+      packSize: 30      // 30 tablets per bottle
     }
   } as Medication,
 
@@ -115,9 +130,14 @@ export const TABLET_MEDICATIONS = {
       }
     }],
     isScored: 'NONE' as const,
-    packageInfo: {
-      quantity: 30,
+    totalVolume: {
+      value: 1,         // 1 capsule per unit dose (FHIR totalVolume)
       unit: 'capsule'
+    },
+    packageInfo: {
+      quantity: 1,      // 1 capsule per unit dose
+      unit: 'capsule',
+      packSize: 30      // 30 capsules per bottle
     }
   } as Medication
 };
@@ -150,8 +170,12 @@ export const LIQUID_MEDICATIONS = {
       numerator: { value: 250, unit: 'mg' },
       denominator: { value: 5, unit: 'mL' }
     },
+    totalVolume: {
+      value: 150,       // 150mL per bottle (FHIR totalVolume)
+      unit: 'mL'
+    },
     packageInfo: {
-      quantity: 150,
+      quantity: 150,    // 150mL per bottle (unit dose)
       unit: 'mL'
     }
   } as Medication,
@@ -180,8 +204,12 @@ export const LIQUID_MEDICATIONS = {
       numerator: { value: 160, unit: 'mg' },
       denominator: { value: 5, unit: 'mL' }
     },
+    totalVolume: {
+      value: 120,       // 120mL per bottle (FHIR totalVolume)
+      unit: 'mL'
+    },
     packageInfo: {
-      quantity: 120,
+      quantity: 120,    // 120mL per bottle (unit dose)
       unit: 'mL'
     }
   } as Medication,
@@ -210,8 +238,12 @@ export const LIQUID_MEDICATIONS = {
       numerator: { value: 100, unit: 'units' },
       denominator: { value: 1, unit: 'mL' }
     },
+    totalVolume: {
+      value: 10,        // 10mL per pen/vial (FHIR totalVolume)
+      unit: 'mL'
+    },
     packageInfo: {
-      quantity: 10,
+      quantity: 10,     // 10mL per pen/vial (unit dose)
       unit: 'mL'
     }
   } as Medication
@@ -245,9 +277,14 @@ export const INJECTABLE_MEDICATIONS = {
       numerator: { value: 200, unit: 'mg' },
       denominator: { value: 1, unit: 'mL' }
     },
-    packageInfo: {
-      quantity: 10,
+    totalVolume: {
+      value: 10,        // 10mL per individual vial (FHIR totalVolume)
       unit: 'mL'
+    },
+    packageInfo: {
+      quantity: 10,     // 10mL per individual vial (unit dose)
+      unit: 'mL',
+      packSize: 2       // 2 vials per package (total = 20mL)
     }
   } as Medication,
 
@@ -275,9 +312,14 @@ export const INJECTABLE_MEDICATIONS = {
       numerator: { value: 10, unit: 'mg' },
       denominator: { value: 1, unit: 'mL' }
     },
-    packageInfo: {
-      quantity: 1,
+    totalVolume: {
+      value: 1,         // 1mL per ampule/vial (FHIR totalVolume)
       unit: 'mL'
+    },
+    packageInfo: {
+      quantity: 1,      // 1mL per ampule/vial (unit dose)
+      unit: 'mL',
+      packSize: 10      // 10 ampules per package
     }
   } as Medication
 };
@@ -312,8 +354,12 @@ export const TOPICAL_MEDICATIONS = {
       volumePerUnit: 0.25, // 4 clicks = 1 mL
       strengthPerUnit: 2.5 // mg per click
     },
+    totalVolume: {
+      value: 30,        // 30g per tube (FHIR totalVolume)
+      unit: 'g'
+    },
     packageInfo: {
-      quantity: 30,
+      quantity: 30,     // 30g per tube (unit dose)
       unit: 'g'
     }
   } as Medication,
@@ -338,8 +384,12 @@ export const TOPICAL_MEDICATIONS = {
         denominator: { value: 1, unit: 'g' }
       }
     }],
+    totalVolume: {
+      value: 30,        // 30g per tube (FHIR totalVolume)
+      unit: 'g'
+    },
     packageInfo: {
-      quantity: 30,
+      quantity: 30,     // 30g per tube (unit dose)
       unit: 'g'
     }
   } as Medication
@@ -384,8 +434,12 @@ export const MULTI_INGREDIENT_MEDICATIONS = {
       volumePerUnit: 0.25,
       strengthPerUnit: null // Multi-ingredient, use volume dosing
     },
+    totalVolume: {
+      value: 50,        // 50g per tube (FHIR totalVolume)
+      unit: 'g'
+    },
     packageInfo: {
-      quantity: 50,
+      quantity: 50,     // 50g per tube (unit dose)
       unit: 'g'
     }
   } as Medication,
@@ -420,9 +474,14 @@ export const MULTI_INGREDIENT_MEDICATIONS = {
       }
     ],
     isScored: 'HALF' as const,
-    packageInfo: {
-      quantity: 90,
+    totalVolume: {
+      value: 1,         // 1 tablet per unit dose (FHIR totalVolume)
       unit: 'tablet'
+    },
+    packageInfo: {
+      quantity: 1,      // 1 tablet per unit dose
+      unit: 'tablet',
+      packSize: 90      // 90 tablets per bottle
     }
   } as Medication
 };
@@ -452,9 +511,14 @@ export const EDGE_CASE_MEDICATIONS = {
       }
     }],
     isScored: 'NONE' as const,
-    packageInfo: {
-      quantity: 12,
+    totalVolume: {
+      value: 1,         // 1 capsule per unit dose (FHIR totalVolume)
       unit: 'capsule'
+    },
+    packageInfo: {
+      quantity: 1,      // 1 capsule per unit dose
+      unit: 'capsule',
+      packSize: 12      // 12 capsules per bottle
     }
   } as Medication,
 
@@ -482,8 +546,12 @@ export const EDGE_CASE_MEDICATIONS = {
       numerator: { value: 0.1, unit: 'mg' },
       denominator: { value: 1, unit: 'mL' }
     },
+    totalVolume: {
+      value: 60,        // 60mL per bottle (FHIR totalVolume)
+      unit: 'mL'
+    },
     packageInfo: {
-      quantity: 60,
+      quantity: 60,     // 60mL per bottle (unit dose)
       unit: 'mL'
     }
   } as Medication

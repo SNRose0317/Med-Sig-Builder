@@ -2,6 +2,8 @@
 
 A web application for creating standardized medication signatures (instructions) for prescriptions. The application helps healthcare providers create clear, consistent medication instructions that can be included in prescriptions.
 
+**📖 Schema Documentation:** See [`src/types/README.md`](src/types/README.md) for complete medication schema documentation with FHIR packaging examples.
+
 ## Features
 
 - Create medication signatures using a structured form

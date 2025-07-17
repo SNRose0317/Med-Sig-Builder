@@ -10,7 +10,7 @@ import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
 import { Save, Trash2, ChevronLeft, X } from 'lucide-react';
-import { doseForms, doseFormOptions, dispenserTypes, dispenserOptions, routes, routeOptions } from '../constants/medication-data';
+import { doseForms, doseFormOptions, dispenserTypes, dispenserOptions, routes } from '../constants/medication-data';
 import SignatureBuilder from './SignatureBuilder';
 import { DoseInput, getStrengthMode } from '../lib/signature';
 
@@ -42,7 +42,7 @@ const createDefaultMedication = (): Medication => ({
   defaultRoute: ''
 });
 
-const MedicationManager: React.FC<MedicationManagerProps> = ({ onMedicationSelect }) => {
+const MedicationManager: React.FC<MedicationManagerProps> = () => {
   // Use the new hook
   const {
     medications,
@@ -140,7 +140,7 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ onMedicationSelec
         }));
       }
     }
-  }, [formData.doseForm]);
+  }, [formData.doseForm, formData.defaultRoute]);
 
   // Handlers
   const handleAddNew = () => {
@@ -218,11 +218,11 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ onMedicationSelec
   };
 
   // Multi-ingredient handling
-  const handleIngredientChange = (index: number, field: string, value: any) => {
+  const handleIngredientChange = (index: number, field: string, value: string | number) => {
     setFormData(prev => {
       const newIngredients = [...(prev.ingredient || [])];
       if (field === 'name') {
-        newIngredients[index] = { ...newIngredients[index], name: value };
+        newIngredients[index] = { ...newIngredients[index], name: value as string };
       } else if (field.startsWith('strength')) {
         const parts = field.split('.');
         if (parts[1] === 'numerator') {
@@ -232,7 +232,7 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ onMedicationSelec
               ...newIngredients[index].strengthRatio,
               numerator: {
                 ...newIngredients[index].strengthRatio.numerator,
-                [parts[2]]: value
+                [parts[2]]: parts[2] === 'value' ? value as number : value as string
               }
             }
           };
@@ -243,7 +243,7 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ onMedicationSelec
               ...newIngredients[index].strengthRatio,
               denominator: {
                 ...newIngredients[index].strengthRatio.denominator,
-                [parts[2]]: value
+                [parts[2]]: parts[2] === 'value' ? value as number : value as string
               }
             }
           };
@@ -451,7 +451,63 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ onMedicationSelec
         </FormSection>
 
         {/* Ingredient & Strength */}
-        <FormSection title="Ingredient & Strength">
+        <FormSection 
+          title="Ingredient & Strength"
+          description="Define active ingredients and their strength ratios"
+        >
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <FormField 
+                label="Strength Mode"
+                description="How ingredient strength is calculated"
+              >
+                <Select 
+                  value={getStrengthMode(formData.doseForm)} 
+                  onValueChange={() => {
+                    // This is primarily for display, strength mode is auto-calculated based on dose form
+                    // Could implement override logic here if needed
+                  }}
+                >
+                  <SelectTrigger className="bg-input border-input text-foreground w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border text-popover-foreground">
+                    <SelectItem value="ratio">Ratio (for liquids)</SelectItem>
+                    <SelectItem value="quantity">Quantity (for solids)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormField>
+              
+              <FormField 
+                label="Multi-ingredient"
+                description="Override auto-detection for multi-ingredient compounds"
+              >
+                <label className="flex items-center gap-2 mt-6">
+                  <input
+                    type="checkbox"
+                    checked={(formData.ingredient?.length || 0) > 1}
+                    onChange={() => {
+                      // If unchecking, reduce to single ingredient
+                      if ((formData.ingredient?.length || 0) > 1) {
+                        setFormData({
+                          ...formData,
+                          ingredient: formData.ingredient?.slice(0, 1) || []
+                        });
+                      } else {
+                        // If checking, add a second ingredient
+                        addIngredient();
+                      }
+                    }}
+                    className="rounded border-border"
+                  />
+                  <span className="text-sm text-secondary-foreground">
+                    Uses direct volume instead of active ingredient
+                  </span>
+                </label>
+              </FormField>
+            </div>
+          </div>
+          
           <div className="space-y-4">
             {formData.ingredient?.map((ingredient, index) => (
               <div key={index} className="p-4 bg-secondary rounded-lg space-y-4">
@@ -528,9 +584,15 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ onMedicationSelec
         </FormSection>
 
         {/* Dosing & Dispensing */}
-        <FormSection title="Dosing & Dispensing">
+        <FormSection 
+          title="Dosing & Dispensing"
+          description="Route administration and dispensing method configuration"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField label="Default Route">
+            <FormField 
+              label="Default Route"
+              description="Primary administration route for this medication"
+            >
               <Select 
                 value={formData.defaultRoute} 
                 onValueChange={(value) => setFormData({ ...formData, defaultRoute: value })}
@@ -548,7 +610,10 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ onMedicationSelec
               </Select>
             </FormField>
             {availableDispenserTypes.length > 0 && (
-              <FormField label="Dispenser Type">
+              <FormField 
+                label="Dispenser Type"
+                description="Special dispensing method (e.g., Topiclick, syringe)"
+              >
                 <Select 
                   value={formData.dispenserInfo?.type || ''} 
                   onValueChange={(value) => {
@@ -581,10 +646,97 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ onMedicationSelec
           </div>
         </FormSection>
 
-        {/* Package Information */}
-        <FormSection title="Package Information">
+        {/* Prescription Quantity Constraints */}
+        <FormSection 
+          title="Prescription Quantity Constraints"
+          description="Define minimum, default, and maximum quantities for prescription orders"
+        >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <FormField label="Package Quantity">
+            <FormField 
+              label="Minimum Quantity"
+              description="Smallest quantity that can be prescribed"
+            >
+              <Input
+                type="number"
+                value={formData.quantityConstraints?.minQty || ''}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  quantityConstraints: {
+                    ...formData.quantityConstraints,
+                    minQty: e.target.value ? Number(e.target.value) : undefined,
+                    defaultQty: formData.quantityConstraints?.defaultQty,
+                    maxQty: formData.quantityConstraints?.maxQty
+                  }
+                })}
+                className="bg-input border-input text-foreground"
+                placeholder="e.g., 1, 30"
+              />
+            </FormField>
+            
+            <FormField 
+              label="Default Quantity"
+              description="Suggested quantity for new prescriptions"
+            >
+              <Input
+                type="number"
+                value={formData.quantityConstraints?.defaultQty || ''}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  quantityConstraints: {
+                    ...formData.quantityConstraints,
+                    minQty: formData.quantityConstraints?.minQty,
+                    defaultQty: e.target.value ? Number(e.target.value) : undefined,
+                    maxQty: formData.quantityConstraints?.maxQty
+                  }
+                })}
+                className="bg-input border-input text-foreground"
+                placeholder="e.g., 30, 90"
+              />
+            </FormField>
+            
+            <FormField 
+              label="Maximum Quantity"
+              description="Largest quantity that can be prescribed"
+            >
+              <Input
+                type="number"
+                value={formData.quantityConstraints?.maxQty || ''}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  quantityConstraints: {
+                    ...formData.quantityConstraints,
+                    minQty: formData.quantityConstraints?.minQty,
+                    defaultQty: formData.quantityConstraints?.defaultQty,
+                    maxQty: e.target.value ? Number(e.target.value) : undefined
+                  }
+                })}
+                className="bg-input border-input text-foreground"
+                placeholder="e.g., 180, 360"
+              />
+            </FormField>
+          </div>
+        </FormSection>
+
+        {/* Package Information - FHIR Compliant */}
+        <FormSection 
+          title="Package Information" 
+          description="FHIR-compliant packaging model for accurate dispensing and days supply calculations"
+        >
+          <div className="mb-4 p-4 bg-accent/20 border border-accent rounded-lg">
+            <h4 className="text-sm font-medium text-accent-foreground mb-2">📋 FHIR Packaging Model</h4>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              <strong>Unit Dose (Quantity):</strong> Amount per individual unit (1 tablet, 10mL per vial, 30g per tube)<br/>
+              <strong>Pack Size:</strong> How many units come in a dispensed package (100 tablets per bottle, 2 vials per package)<br/>
+              <strong>Total Volume:</strong> Volume/quantity of the individual dispensing unit
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Unit Dose Fields */}
+            <FormField 
+              label="Unit Dose Quantity" 
+              description="Amount per individual unit (e.g., 1 tablet, 10mL per vial)"
+            >
               <Input
                 type="number"
                 value={formData.packageInfo?.quantity || ''}
@@ -597,9 +749,14 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ onMedicationSelec
                   }
                 })}
                 className="bg-input border-input text-foreground"
+                placeholder="e.g., 1, 10, 30"
               />
             </FormField>
-            <FormField label="Package Unit">
+            
+            <FormField 
+              label="Unit Dose Unit" 
+              description="Unit type for individual dose (tablet, mL, g)"
+            >
               <Input
                 value={formData.packageInfo?.unit || ''}
                 onChange={(e) => setFormData({
@@ -611,11 +768,37 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ onMedicationSelec
                   }
                 })}
                 className="bg-input border-input text-foreground"
-                placeholder="e.g., Vial, Bottle"
+                placeholder="tablet, mL, g, capsule"
               />
             </FormField>
-            {formData.doseForm === 'Vial' && (
-              <FormField label="Total Volume (mL)">
+            
+            <FormField 
+              label="Pack Size" 
+              description="Number of units in dispensed package (optional for single-unit packages)"
+            >
+              <Input
+                type="number"
+                value={formData.packageInfo?.packSize || ''}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  packageInfo: {
+                    ...formData.packageInfo,
+                    quantity: formData.packageInfo?.quantity || 0,
+                    unit: formData.packageInfo?.unit || '',
+                    packSize: e.target.value ? Number(e.target.value) : undefined
+                  }
+                })}
+                className="bg-input border-input text-foreground"
+                placeholder="e.g., 100, 2, 30"
+              />
+            </FormField>
+            
+            {/* Total Volume - Show for all dose forms, not just Vials */}
+            <FormField 
+              label="Total Volume" 
+              description="Volume/quantity of individual unit (matches Unit Dose for FHIR compliance)"
+            >
+              <div className="flex gap-2">
                 <Input
                   type="number"
                   value={formData.totalVolume?.value || ''}
@@ -623,13 +806,36 @@ const MedicationManager: React.FC<MedicationManagerProps> = ({ onMedicationSelec
                     ...formData,
                     totalVolume: {
                       value: Number(e.target.value),
-                      unit: 'mL'
+                      unit: formData.totalVolume?.unit || (formData.packageInfo?.unit || 'mL')
                     }
                   })}
-                  className="bg-input border-input text-foreground"
+                  className="bg-input border-input text-foreground flex-1"
+                  placeholder="Same as unit dose"
                 />
-              </FormField>
-            )}
+                <Input
+                  value={formData.totalVolume?.unit || (formData.packageInfo?.unit || 'mL')}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    totalVolume: {
+                      value: formData.totalVolume?.value || 0,
+                      unit: e.target.value
+                    }
+                  })}
+                  className="bg-input border-input text-foreground w-20"
+                  placeholder="Unit"
+                />
+              </div>
+            </FormField>
+          </div>
+          
+          {/* Example Section */}
+          <div className="mt-6 p-4 bg-muted/20 border border-muted rounded-lg">
+            <h4 className="text-sm font-medium text-muted-foreground mb-2">💡 Examples</h4>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <div><strong>Testosterone 200mg/mL:</strong> Unit Dose: 10mL, Pack Size: 2 (= 2 vials × 10mL = 20mL total)</div>
+              <div><strong>Metformin 500mg:</strong> Unit Dose: 1 tablet, Pack Size: 100 (= 100 tablets per bottle)</div>
+              <div><strong>Hormone Cream:</strong> Unit Dose: 30g, Pack Size: 1 (= single 30g tube)</div>
+            </div>
           </div>
         </FormSection>
 

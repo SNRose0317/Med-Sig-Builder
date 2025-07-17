@@ -143,8 +143,9 @@ describe('MultiIngredientBuilder', () => {
 
       const instruction = result[0];
       expect(instruction.text).toContain('containing');
-      expect(instruction.text).toContain('Estradiol');
-      expect(instruction.text).toContain('Progesterone');
+      expect(instruction.text).toContain('Testosterone');
+      expect(instruction.text).toContain('Anastrozole');
+      expect(instruction.text).toContain('DHEA');
     });
 
     it('should calculate scaled ingredient amounts', () => {
@@ -158,8 +159,9 @@ describe('MultiIngredientBuilder', () => {
       const audit = builder.explain();
       
       // Should show scaled amounts for 5g dose
-      expect(audit).toContain('Ingredient: Estradiol 5.0mg');
-      expect(audit).toContain('Ingredient: Progesterone 500.0mg');
+      expect(audit).toContain('Ingredient: Testosterone 250.0mg');  // 50mg/g × 5g = 250mg
+      expect(audit).toContain('Ingredient: Anastrozole 2.5mg');     // 0.5mg/g × 5g = 2.5mg
+      expect(audit).toContain('Ingredient: DHEA 50.0mg');           // 10mg/g × 5g = 50mg
     });
 
     it('should handle explicit multi-ingredient dose configuration', () => {
@@ -203,9 +205,10 @@ describe('MultiIngredientBuilder', () => {
     });
 
     it('should handle combination tablet medications', () => {
+      const tabletBuilder = new MultiIngredientBuilder(combinationTablet);
       const dose: DoseInput = { value: 1, unit: 'tablet' };
       
-      const result = builder
+      const result = tabletBuilder
         .buildDose(dose)
         .buildTiming({ frequency: 1, period: 1, periodUnit: 'd' })
         .buildRoute('by mouth')
@@ -218,18 +221,19 @@ describe('MultiIngredientBuilder', () => {
     });
 
     it('should calculate tablet-based ingredient scaling', () => {
+      const tabletBuilder = new MultiIngredientBuilder(combinationTablet);
       const dose: DoseInput = { value: 2, unit: 'tablet' };
       
-      builder
+      tabletBuilder
         .buildDose(dose)
         .buildTiming({ frequency: 1, period: 1, periodUnit: 'd' })
         .buildRoute('by mouth');
 
-      const audit = builder.explain();
+      const audit = tabletBuilder.explain();
       
       // Should show scaled amounts for 2 tablets
-      expect(audit).toContain('Ingredient: Lisinopril 20.0mg');
-      expect(audit).toContain('Ingredient: Hydrochlorothiazide 25.0mg');
+      expect(audit).toContain('Ingredient: Lisinopril 20.0mg');      // 10mg × 2 tablets = 20mg
+      expect(audit).toContain('Ingredient: Hydrochlorothiazide 25.0mg'); // 12.5mg × 2 tablets = 25mg
     });
   });
 
@@ -452,9 +456,9 @@ describe('MultiIngredientBuilder', () => {
 
       // Access the protected method through explain functionality
       const audit = builder.explain();
-      expect(audit).toContain('Contains:');
-      expect(audit).toContain('Estradiol');
-      expect(audit).toContain('Progesterone');
+      expect(audit).toContain('Ingredient: Testosterone');
+      expect(audit).toContain('Ingredient: Anastrozole');
+      expect(audit).toContain('Ingredient: DHEA');
     });
   });
 
@@ -475,7 +479,7 @@ describe('MultiIngredientBuilder', () => {
       
       expect(serialized.builderType).toBe('MultiIngredientBuilder');
       expect(serialized.ingredientFeatures).toBeDefined();
-      expect(serialized.ingredientFeatures.ingredientCount).toBe(2);
+      expect(serialized.ingredientFeatures.ingredientCount).toBe(3);
       expect(serialized.ingredientBreakdown).toBeDefined();
       expect(serialized.complexState).toBeDefined();
     });
@@ -491,10 +495,10 @@ describe('MultiIngredientBuilder', () => {
       const explanation = builder.explain();
       
       expect(explanation).toContain('Multi-Ingredient Features');
-      expect(explanation).toContain('Ingredient count: 2');
+      expect(explanation).toContain('Ingredient count: 3');
       expect(explanation).toContain('Breakdown display: Enabled');
       expect(explanation).toContain('Ingredients:');
-      expect(explanation).toContain('Medication type: medication');
+      expect(explanation).toContain('Medication type: compound');
     });
 
     it('should provide complex regimen explanation', () => {
@@ -510,7 +514,7 @@ describe('MultiIngredientBuilder', () => {
       const complexExplanation = (builder as MultiIngredientBuilder).explainComplexRegimen();
       
       expect(complexExplanation).toContain('Multi-Ingredient Breakdown');
-      expect(complexExplanation).toContain('Ingredients (2):');
+      expect(complexExplanation).toContain('Ingredients (3):');
       expect(complexExplanation).toContain('Complex Operations:');
     });
   });

@@ -189,11 +189,15 @@ export class TabletDaysSupplyStrategy implements IDaysSupplyStrategy {
   }
 
   /**
-   * Get pack size information
+   * Get pack size information from medication data
    */
   private getPackInfo(context: DaysSupplyContext): { packSize: number } {
-    // This would integrate with medication data to get pack size
-    // For now, assume single units unless specified
+    // Check if medication has packaging information
+    if (context.medication?.packageInfo?.packSize) {
+      return { packSize: context.medication.packageInfo.packSize };
+    }
+    
+    // Fallback to single units if no pack size specified
     return { packSize: 1 };
   }
 

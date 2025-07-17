@@ -1,9 +1,13 @@
 /**
  * MedicationProfile Interface
  * 
+ * Extended medication interface with advanced features for complex dosing scenarios.
  * Immutable input data structure that captures all medication information
  * needed for signature generation. This is the primary input to the 
  * refactored medication signature builder system.
+ * 
+ * @see {@link ./README.md} Complete schema documentation with FHIR packaging examples
+ * @see {@link ./index.ts} Primary Medication interface for basic use cases
  * 
  * @since 2.0.0
  */

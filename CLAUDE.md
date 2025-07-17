@@ -91,6 +91,21 @@ The Medication Signature Builder is a React/TypeScript web application designed 
   - Performance gates with P50 < 20ms, P95 < 50ms, P99 < 100ms thresholds
 - **Status**: Complete framework ready for production deployment
 
+### FHIR Packaging Model Correction (2025-07-17) ✅
+- **Critical Issue Identified**: Medication fixtures were using incorrect FHIR packaging model
+- **Problem**: `totalVolume` represented total package quantity instead of individual unit volume
+- **Solution Applied**:
+  - Updated all medication fixtures to correct FHIR R4 standard
+  - `totalVolume` now represents individual unit (vial, tablet, tube) volume
+  - `packageInfo.quantity` matches `totalVolume.value` (unit dose)
+  - Added `packageInfo.packSize` for units per dispensed package
+- **Impact**: Ensures accurate days supply calculations and FHIR compliance
+- **Files Updated**: 
+  - All medication fixtures in `src/test/data/medication-fixtures.ts`
+  - Documentation in `docs/medication-ui-fields.md`
+  - Schema documentation in `CLAUDE.md`
+- **Status**: Complete with verified days supply calculations
+
 ### Epic 1: Foundation & Core Contracts (2025-07-11) ✅
 - **Completed Tasks**:
   - Task 1.1: Core Data Models (MedicationProfile, SignatureInstruction, MedicationRequestContext)
@@ -184,8 +199,32 @@ src/
   - `is_active` (boolean)
   - `code`, `ingredient` (JSONB)
   - `package_info`, `dispenser_info` (JSONB)
+  - `total_volume` (JSONB) - FHIR compliant individual unit volume
   - `dosage_constraints` (flattened to individual columns)
   - Timestamps with automatic triggers
+
+**📖 Complete Schema Documentation:** See [`src/types/README.md`](src/types/README.md) for the authoritative medication schema reference with comprehensive FHIR packaging examples and validation rules.
+
+### FHIR Packaging Model (Updated 2025-07-17)
+Our database now implements the correct FHIR R4 packaging standard:
+
+- **`total_volume`**: Individual unit volume (e.g., 10mL per vial, 1 tablet per unit)
+- **`package_info.quantity`**: Unit dose quantity (same as total_volume.value)
+- **`package_info.unit`**: Unit of measurement
+- **`package_info.packSize`**: Number of units per dispensed package
+
+**Example - Testosterone Cypionate 200mg/mL:**
+```json
+{
+  "total_volume": { "value": 10, "unit": "mL" },
+  "package_info": {
+    "quantity": 10,
+    "unit": "mL", 
+    "packSize": 2
+  }
+}
+```
+This represents: 10mL per vial, 2 vials per package (total 20mL dispensed)
 
 ## Environment Setup
 - Requires `.env` file with:
